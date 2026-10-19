@@ -1,0 +1,23 @@
+// เวอร์ชันแอปและ changelog สั้น ๆ (แสดงในหน้า “ตั้งค่า”) — เพิ่มรายการบนสุดทุกครั้งที่ปล่อยของใหม่
+export const APP_VERSION = "1.0.0";
+
+export const CHANGELOG = [
+  { version: "1.0.0", title: "เฟส 4 — เชื่อมโยง + วิเคราะห์", notes: [
+    "ลิงก์ [[ ]] และ Backlinks ในโน้ตของแต่ละคำ, กราฟเชื่อมโยงคำ (Cytoscape) ทั้งคลังและรอบคำ",
+    "Export Obsidian vault (.zip)",
+    "หน้าสถิติ (Chart.js) จาก dailyStats ที่คำนวณใหม่ได้เสมอ + Technique Score + Mini-challenge ในหน้าวันนี้",
+    "โหมดคละโจทย์ และโหมดสอบจับเวลาจากคลังข้อสอบที่ผู้ใช้นำเข้าเอง; Roadmap ขั้น 4 แสดงสถานะ “ถึงเป้า 2 ครั้งติด”",
+    "ปรับ accessibility: ปุ่มทุกปุ่มสูง ≥ 44px, contrast, focus ring",
+  ] },
+  { version: "0.3.0", title: "เฟส 3 — เขียน + Shadowing", notes: [
+    "คัดลายมือ 4 ระดับ (Pencil/นิ้ว), คลังคลิป + Shadowing (YouTube IFrame/ไฟล์เสียง) พร้อมอัดเสียงในเครื่อง",
+    "ตัวเช็ก i+1, Journal + AI ตรวจ (ใช้ Claude API key ของคุณเอง)",
+  ] },
+  { version: "0.2.0", title: "เฟส 2 — คลังคำศัพท์ + API", notes: [
+    "คลังคำศัพท์ถาวร (แปลครั้งเดียว), แท็กซ้อนชั้น + Smart folder, Onboarding + Roadmap + Checkpoint",
+    "ฝึกเจาะจุดจาก Error Log และ Techniques Hub",
+  ] },
+  { version: "0.1.0", title: "เฟส 1 — โครงแอป", notes: [
+    "ตัวจับเวลา 4 ช่วง, บัตรคำ SRS (SM-2), Error Log, Streak, ซิงก์ข้ามเครื่อง (Firebase) + ใช้ออฟไลน์ (PWA)",
+  ] },
+];

@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>exam harness</title>
+<script type="importmap">{ "imports": { "/js/db.js": "/tests/mock-db.js", "../db.js": "/tests/mock-db.js", "./db.js": "/tests/mock-db.js" } }</script>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css"><link rel="stylesheet" href="/css/app.css"></head>
+<body><main class="main" id="view"></main><div id="toast" class="toast" hidden></div>
+<script type="module">
+  const m = await import("/js/views/exam.js");
+  window.__toasts = [];
+  window.__cleanup = m.render(document.getElementById("view"), { toast: (t) => { window.__toasts.push(t); console.log("toast:", t); } });
+</script></body></html>

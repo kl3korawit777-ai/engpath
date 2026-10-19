@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>graph perf harness</title>
+<script type="importmap">{ "imports": { "/js/db.js": "/tests/mock-db.js", "../db.js": "/tests/mock-db.js", "./db.js": "/tests/mock-db.js" } }</script>
+<link rel="stylesheet" href="/css/tokens.css"><link rel="stylesheet" href="/css/app.css"></head>
+<body><main class="main" id="view"></main><div id="toast" class="toast" hidden></div>
+<script type="module">
+  // ข้อมูลทดสอบสังเคราะห์ (ไม่ใช่ข้อมูลจริง) — ?n=จำนวนคำ
+  const N = Number(new URLSearchParams(location.search).get("n") || 1000);
+  const db = await import("/tests/mock-db.js");
+  const { buildLinkDoc } = await import("/js/links.js");
+  let seed = 12345; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  const syl = ["ba","ko","ri","tu","men","sal","vor","lin","dex","pa","qui","zo","mar","fen","tal","gri"];
+  const words = new Set(); while (words.size < N) { let w = ""; const k = 2 + Math.floor(rnd() * 3); for (let i = 0; i < k; i++) w += syl[Math.floor(rnd() * syl.length)]; words.add(w); }
+  const list = [...words];
+  const CL = 20;
+  const near = (i) => { const c = Math.floor(i / CL) * CL; return list[Math.min(N - 1, c + Math.floor(rnd() * CL))]; };
+  const tags = Array.from({ length: 30 }, (_, i) => `topic${i}/sub${i % 3}`);
+  list.forEach((w, i) => {
+    const ex = `${w} goes with ${near(i)} and ${near(i)}.`;
+    db.create("cards", { en: w, th: "ทดสอบ " + w, example: ex, tags: [tags[i % 30]], freq: 20, pos: "noun" });
+    if (i % 2 === 0) db.create("links", { id: w, ...buildLinkDoc(w, `see [[${near(i)}]] and [[${near(i)}]]\n[[${list[Math.floor(rnd() * N)]}]]`) });
+    db.lexiconPut(w, { word: w, th: [], meanings: [], examples: [], related: { syn: [near(i)], ant: [i % 5 === 0 ? near(i) : "zzzout" + (i % 40)], trg: [near(i), "extra" + (i % 60)], jjb: [] } }, null);
+  });
+  const q = new URLSearchParams(location.search);
+  const m = await import("/js/views/" + (q.get("view") || "graph") + ".js");
+  window.__t0 = performance.now();
+  m.render(document.getElementById("view"), { toast: (t) => console.log("toast:", t), param: q.get("p") || "" });
+</script></body></html>

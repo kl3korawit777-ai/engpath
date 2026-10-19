@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>view harness</title>
+<script type="importmap">{ "imports": { "/js/db.js": "/tests/mock-db.js", "../db.js": "/tests/mock-db.js" } }</script>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500&family=Andika:wght@400&family=Playwrite+US+Trad:wght@100..400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css"><link rel="stylesheet" href="/css/app.css"></head>
+<body><main class="main" id="view"></main><div id="toast" class="toast" hidden></div>
+<script type="module">
+  const m = await import("/js/views/" + (new URLSearchParams(location.search).get("v") || "cards") + ".js");
+  m.render(document.getElementById("view"), { param: new URLSearchParams(location.search).get("p") || "", toast: (t) => { const el = document.getElementById("toast"); el.textContent = t; el.hidden = false; console.log("toast:", t); } });
+</script></body></html>

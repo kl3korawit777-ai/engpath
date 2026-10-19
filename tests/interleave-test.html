@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>interleave harness</title>
+<script type="importmap">{ "imports": { "/js/db.js": "/tests/mock-db.js", "../db.js": "/tests/mock-db.js", "./db.js": "/tests/mock-db.js" } }</script>
+<link rel="stylesheet" href="/css/tokens.css"><link rel="stylesheet" href="/css/app.css"></head>
+<body><main class="main" id="view"></main><div id="toast" class="toast" hidden></div>
+<script type="module">
+  // ข้อมูลทดสอบสังเคราะห์ (ไม่ใช่ข้อมูลจริง)
+  const db = await import("/tests/mock-db.js");
+  const words = [["necessary", "จำเป็น", "science"], ["separate", "แยก", "science"], ["definitely", "แน่นอน", "work"], ["beautiful", "สวยงาม", "work"], ["restaurant", "ร้านอาหาร", "food"],
+    ["delicious", "อร่อย", "food"], ["knowledge", "ความรู้", "study"], ["language", "ภาษา", "study"], ["government", "รัฐบาล", "work"], ["environment", "สิ่งแวดล้อม", "science"]];
+  const day = 86400000, now = Date.now();
+  window.__cards = words.map(([en, th, tag], i) => {
+    const c = db.create("cards", { en, th, example: `I really think the ${en} is very important today`, tags: [tag + "/sub"] });
+    if (i % 2 === 0) db.append("reviews", { cardId: c.id, rating: 2, mode: "th-en", at: now - 5 * day, answer: "", result: "none" });   // ถึงรอบ
+    return c;
+  });
+  const errs = [["I go yesterday", "I went yesterday", "Tense"], ["a apple", "an apple", "Article"], ["depend of", "depend on", "Preposition"]];
+  window.__errors = errs.map(([wrong, right, category]) => { const e = db.create("errors", { wrong, right, category, note: "" }); db.append("errorEvents", { errorId: e.id, type: "occurred", at: now - day }); return e; });
+  const m = await import("/js/views/interleave.js");
+  window.__cleanup = m.render(document.getElementById("view"), { toast: (t) => console.log("toast:", t) });
+</script></body></html>

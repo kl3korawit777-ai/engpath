@@ -1,0 +1,7 @@
+{
+  "name": "engpath",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}

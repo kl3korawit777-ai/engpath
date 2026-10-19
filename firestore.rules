@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/{col}/{docId} {
+      // อ่านได้เฉพาะเจ้าของ
+      allow read: if isOwner(userId);
+
+      // สร้างได้เฉพาะ collection ที่แอปใช้ และ id ต้องตรงกับชื่อ document
+      allow create: if isOwner(userId)
+        && col in ['settings', 'cards', 'errors', 'lexicon', 'smartFolders', 'clips', 'playlists', 'handwritingWords', 'journal', 'links', 'wordFamilies', 'dailyStats', 'questions', 'examSets',
+                 'reviews', 'sessions', 'errorEvents', 'checkpoints', 'practiceEvents', 'shadowingEvents', 'handwritingAttempts', 'handwritingImages', 'readings', 'interleavingSessions', 'examAttempts']
+        && request.resource.data.id == docId;
+
+      // แก้ไขได้เฉพาะข้อมูลที่ไม่ใช่ events (events ต่อท้ายอย่างเดียว)
+      allow update: if isOwner(userId)
+        && col in ['settings', 'cards', 'errors', 'lexicon', 'smartFolders', 'clips', 'playlists', 'handwritingWords', 'journal', 'links', 'wordFamilies', 'dailyStats', 'questions', 'examSets']
+        && request.resource.data.id == docId;
+
+      // ห้ามลบจริง ใช้ soft delete (deleted: true) แทน
+      allow delete: if false;
+    }
+  }
+}

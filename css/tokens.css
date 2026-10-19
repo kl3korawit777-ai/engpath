@@ -1,0 +1,32 @@
+/* Design tokens — dark mode เพิ่มได้ภายหลังโดย override ใน :root[data-theme="dark"] */
+:root {
+  --bg: #F3EEE4;
+  --surface: #FBF8F1;
+  --paper: #FFFDF8;
+  --ink: #1F1D1A;
+  --muted: #6F685D;
+  --muted-strong: #5C564C;      /* muted บนพื้น --line (ผ่าน 4.5:1) */
+  --line: #E4DCCD;
+  --line-strong: #D9D0BF;
+  --accent: #2E5E4E;
+  --accent-soft: #DDE7DF;
+  --butter: #F1D36B;
+  --good: #2E7D55;
+  --bad: #B4432F;
+
+  --seg-srs: #2E5E4E;
+  --seg-input: #3D5A80;
+  --seg-output: #7A4E7E;
+  --seg-weak: #C98A2B;
+
+  --font-body: "Anuphan", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Anuphan", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --radius-card: 22px;
+  --radius-pill: 999px;
+  --tap: 44px;
+  --dur: 120ms;
+  --sidebar-w: 248px;
+  color-scheme: light;
+}

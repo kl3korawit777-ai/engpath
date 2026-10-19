@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dashboard harness</title>
+<script type="importmap">{ "imports": { "/js/db.js": "/tests/mock-db.js", "../db.js": "/tests/mock-db.js", "./db.js": "/tests/mock-db.js" } }</script>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tokens.css"><link rel="stylesheet" href="/css/app.css"></head>
+<body><main class="main" id="view"></main><div id="toast" class="toast" hidden></div>
+<script type="module">
+  // ชุดข้อมูลทดสอบที่รู้คำตอบ (สังเคราะห์ ไม่ใช่ข้อมูลจริง) — ใช้ตรวจตัวเลข Dashboard
+  const db = await import("/tests/mock-db.js");
+  const at = (daysAgo, h = 10, m = 0) => { const d = new Date(); d.setDate(d.getDate() - daysAgo); d.setHours(h, m, 0, 0); return d.getTime(); };
+  const sess = (daysAgo, min, skill, h = 10) => db.append("sessions", { start: at(daysAgo, h), end: at(daysAgo, h) + min * 60000, durationSec: min * 60, skill, stage: 1 });
+  sess(0, 30, "input"); sess(0, 15, "output", 20); sess(1, 60, "srs"); sess(2, 20, "shadowing"); sess(8, 40, "input"); sess(9, 10, "journal");
+  for (let i = 3; i < 40; i += 4) sess(i, 25, i % 2 ? "srs" : "weak", 7 + (i % 12));
+  const cards = ["a", "b", "c"].map((w, i) => db.create("cards", { en: w + "word", th: w, example: "one two three four five", tags: [], createdAt: at(10 - i) }));
+  cards.forEach((c, i) => { c.createdAt = at(10 - i, 8); });
+  const rev = (c, rating, daysAgo) => db.append("reviews", { cardId: c.id, rating, mode: "x", at: at(daysAgo, 9) });
+  rev(cards[0], 2, 0); rev(cards[0], 0, 0); rev(cards[1], 3, 1); rev(cards[1], 2, 8); rev(cards[2], 1, 8);
+  const e = db.create("errors", { wrong: "go", right: "went", category: "Tense", note: "" });
+  db.append("errorEvents", { errorId: e.id, type: "occurred", at: at(0) }); db.append("errorEvents", { errorId: e.id, type: "occurred", at: at(1) });
+  db.append("handwritingAttempts", { wordKey: "cat", style: "print", level: "word", score: 80, at: at(0) });
+  db.append("handwritingAttempts", { wordKey: "cat", style: "print", level: "word", score: 60, at: at(0, 11) });
+  db.append("handwritingAttempts", { wordKey: "cat", style: "cursive", level: "word", score: 50, at: at(3) });
+  const sync = await import("/js/statsync.js");
+  window.__sync = sync;
+  window.__first = sync.sync();
+  window.__second = sync.sync();
+  const m = await import("/js/views/" + (new URLSearchParams(location.search).get("view") || "dashboard") + ".js");
+  m.render(document.getElementById("view"), { toast: (t) => console.log("toast:", t) });
+</script></body></html>
