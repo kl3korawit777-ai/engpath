@@ -1,6 +1,6 @@
 // Service worker: cache app shell แบบมีเวอร์ชัน + cache ฟอนต์/Firebase SDK ตอนใช้งานจริง
 // เปลี่ยน VERSION ทุกครั้งที่ deploy ไฟล์ในรายการ SHELL เพื่อให้เครื่องผู้ใช้ดึงชุดใหม่
-const VERSION = "v23";
+const VERSION = "v24";
 const SHELL_CACHE = `engpath-shell-${VERSION}`;
 const RUNTIME_CACHE = `engpath-runtime-${VERSION}`;
 

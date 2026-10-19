@@ -254,17 +254,15 @@ export async function initAuth(cb) {
   }
 }
 
-function preferRedirect() {
-  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-  return ios || standalone;
-}
-
+/**
+ * ล็อกอินด้วย popup เป็นหลักทุกอุปกรณ์ — signInWithRedirect พังบน Safari/iPad (Safari 16.1+ บล็อก third-party storage
+ * ทำให้กลับมาที่แอปแล้วไม่ล็อกอิน เมื่อ authDomain ต่างโดเมนกับเว็บ เช่น GitHub Pages) ตามเอกสาร Firebase
+ * ถ้า popup ถูกบล็อกหรือใช้ไม่ได้ ค่อยลอง redirect เป็นทางสุดท้าย
+ */
 export async function signIn() {
   const { auth, A } = F;
   const provider = new A.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-  if (preferRedirect()) return A.signInWithRedirect(auth, provider);
   try {
     await A.signInWithPopup(auth, provider);
   } catch (e) {
