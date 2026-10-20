@@ -1,6 +1,8 @@
 // ส่วนแสดงกราฟ (Cytoscape) ใช้ร่วมกันระหว่างหน้า Global graph และ Local graph ในหน้าคำ
 // ข้อมูล → graph.js (pure) · ไฟล์นี้จัดการโหลด lexicon จาก cache, วาด, layout + จำตำแหน่ง, การเลือกโหนด
 import * as db from "./db.js";
+import { vocab } from "./vocab.js";
+import { lexiconFromEntry, familiesFromEntries } from "./libentry.js";
 import * as srs from "./srs.js";
 import * as lib from "./library.js";
 import * as gr from "./graph.js";
@@ -12,32 +14,13 @@ const VENDOR = "../vendor/cytoscape-3.34.4.esm.min.mjs";
 const POS_KEY = "engpath.graphPositions";
 const LAYOUT_ALL_RATIO = 0.1;      // ถ้าโหนดที่ไม่มีตำแหน่งเกินสัดส่วนนี้ จัดวางใหม่ทั้งกราฟ
 let cytoscapePromise = null;
-const lexiconMemo = new Map();      // wordKey → เอกสาร lexicon (หรือ null = ไม่อยู่ใน cache) · อยู่ตลอดรอบการใช้งาน
 
 export const loadCytoscape = () => (cytoscapePromise ||= import(VENDOR).then((m) => m.default));
 
 // ---------- ข้อมูล ----------
-/** อ่าน lexicon จาก cache ในเครื่อง (ไม่นับ read) แล้วจำไว้; คืนจำนวนที่พบ */
+/** ข้อมูลคำ (คำพ้อง/ตรงข้าม/ความหมาย) มาจากคลังกลางที่โหลดไว้ในเครื่อง — คืนจำนวนคำที่พบในคลัง (คง API เดิมไว้ให้หน้าที่เรียกอยู่) */
 export async function ensureLexicon(keys) {
-  const todo = keys.filter((k) => !lexiconMemo.has(k));
-  for (let i = 0; i < todo.length; i += 50) {
-    await Promise.all(todo.slice(i, i + 50).map(async (k) => { lexiconMemo.set(k, await db.lexiconCached(k)); }));
-  }
-  return keys.filter((k) => lexiconMemo.get(k)).length;
-}
-
-/** โหลดจาก server เฉพาะคำที่ยังไม่มีใน cache (นับ read ต่อคำ — ผู้ใช้กดเอง) onProgress(done,total) */
-export async function fetchMissingLexicon(keys, onProgress) {
-  const miss = keys.filter((k) => !lexiconMemo.get(k));
-  let done = 0, got = 0;
-  for (let i = 0; i < miss.length; i += 10) {
-    await Promise.all(miss.slice(i, i + 10).map(async (k) => {
-      const r = await db.lexiconGet(k).catch(() => ({ doc: null }));
-      if (r.doc) { lexiconMemo.set(k, r.doc); got++; }
-      onProgress?.(++done, miss.length);
-    }));
-  }
-  return { tried: miss.length, got };
+  return keys.filter((k) => vocab.peek(k)).length;
 }
 
 export function collectInput({ ghosts = false } = {}) {
@@ -47,10 +30,10 @@ export function collectInput({ ghosts = false } = {}) {
   for (const c of cards) if (c.example) texts.push(c.example);
   for (const c of db.list("clips")) for (const s of c.sentences || []) if (s.text) texts.push(s.text);
   for (const j of db.list("journal")) for (const s of splitSentences(j.text || "")) texts.push(s);
-  const lexicon = new Map();
-  for (const c of cards) { const k = wordKey(c.en); const l = lexiconMemo.get(k); if (l) lexicon.set(k, l); }
+  const lexicon = new Map(), entries = [];
+  for (const c of cards) { const k = wordKey(c.en); const w = vocab.peek(k); if (w) { lexicon.set(k, lexiconFromEntry(w)); entries.push(w); } }
   return {
-    cards, links: db.list("links"), lexicon, families: db.list("wordFamilies"), texts, ghosts,
+    cards, links: db.list("links"), lexicon, families: [...db.list("wordFamilies"), ...familiesFromEntries(entries)], texts, ghosts,
     statusOf: (key) => { const c = cards.find((x) => wordKey(x.en) === key); return c ? lib.memoryStatus(states.get(c.id)) : "new"; },
   };
 }

@@ -1,0 +1,143 @@
+{
+  "schema": 2,
+  "version": "1.0.0",
+  "contentHash": "3cee13269e6911e673f1245420ba56544519feb3a0f60d0b1b9693eaaf3ffeb6",
+  "complete": true,
+  "count": 5050,
+  "levels": [
+    {
+      "level": 1,
+      "file": "level-01.json",
+      "count": 400,
+      "rankFrom": 1,
+      "rankTo": 400,
+      "bytes": 410144
+    },
+    {
+      "level": 2,
+      "file": "level-02.json",
+      "count": 400,
+      "rankFrom": 401,
+      "rankTo": 800,
+      "bytes": 398602
+    },
+    {
+      "level": 3,
+      "file": "level-03.json",
+      "count": 400,
+      "rankFrom": 801,
+      "rankTo": 1200,
+      "bytes": 393689
+    },
+    {
+      "level": 4,
+      "file": "level-04.json",
+      "count": 400,
+      "rankFrom": 1201,
+      "rankTo": 1600,
+      "bytes": 379596
+    },
+    {
+      "level": 5,
+      "file": "level-05.json",
+      "count": 400,
+      "rankFrom": 1601,
+      "rankTo": 2000,
+      "bytes": 375615
+    },
+    {
+      "level": 6,
+      "file": "level-06.json",
+      "count": 400,
+      "rankFrom": 2001,
+      "rankTo": 2400,
+      "bytes": 373622
+    },
+    {
+      "level": 7,
+      "file": "level-07.json",
+      "count": 400,
+      "rankFrom": 2401,
+      "rankTo": 2800,
+      "bytes": 368560
+    },
+    {
+      "level": 8,
+      "file": "level-08.json",
+      "count": 400,
+      "rankFrom": 2801,
+      "rankTo": 3200,
+      "bytes": 364137
+    },
+    {
+      "level": 9,
+      "file": "level-09.json",
+      "count": 600,
+      "rankFrom": 3201,
+      "rankTo": 3800,
+      "bytes": 540211
+    },
+    {
+      "level": 10,
+      "file": "level-10.json",
+      "count": 600,
+      "rankFrom": 3801,
+      "rankTo": 4400,
+      "bytes": 598604
+    },
+    {
+      "level": 11,
+      "file": "level-11.json",
+      "count": 650,
+      "rankFrom": 4401,
+      "rankTo": 5050,
+      "bytes": 636499
+    }
+  ],
+  "tags": [
+    "daily-life",
+    "science",
+    "health",
+    "education",
+    "work",
+    "travel",
+    "emotion",
+    "society",
+    "technology",
+    "nature"
+  ],
+  "cefr": [
+    "A1",
+    "A2",
+    "B1",
+    "B2",
+    "C1"
+  ],
+  "pos": [
+    "noun",
+    "verb",
+    "adjective",
+    "adverb",
+    "preposition",
+    "conjunction",
+    "pronoun",
+    "determiner",
+    "interjection",
+    "number",
+    "modal",
+    "auxiliary",
+    "particle"
+  ],
+  "sources": [
+    "wiktionary",
+    "claude",
+    "manual"
+  ],
+  "credits": {
+    "list": "NGSL-GR 1.0 (New General Service List — Gradient Rank) จาก newgeneralservicelist.com — CC BY-SA 4.0",
+    "wiktionary": "ความหมายอังกฤษ คำแปลไทย IPA คำพ้อง/คำตรงข้าม/ตระกูลคำ มาจาก Wiktionary (CC BY-SA 4.0) ผ่านข้อมูลสกัดของ kaikki.org (Wiktextract — Tatu Ylonen, LREC 2022)",
+    "claude": "คำแปลไทยที่ Wiktionary ไม่มี ประโยคตัวอย่าง วลี แท็ก และระดับ CEFR เขียนโดย Claude (Anthropic) และตรวจทานโดยผู้ดูแล",
+    "license": "ไฟล์ใน /vocab เผยแพร่ภายใต้ CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)"
+  },
+  "license": "CC BY-SA 4.0"
+}

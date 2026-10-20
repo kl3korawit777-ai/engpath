@@ -1,0 +1,33 @@
+{
+  "vocabVersion": "1.0.0",
+  "input": "input/NGSL-GR_rank.csv",
+  "levels": {
+    "sizes": [400, 400, 400, 400, 400, 400, 400, 400, 600, 600],
+    "note": "ระดับ 1–8 ระดับละ 400 คำ, ระดับ 9–10 ระดับละ 600 คำ, ระดับ 11 = คำที่เหลือทั้งหมด (CSV ไม่มีคอลัมน์ระดับ จึงคำนวณจาก WordID)"
+  },
+  "wordFixes": {
+    "13": { "from": "august", "to": "August", "why": "อยู่ระหว่าง July กับ September ในลำดับเดือน — เขียนตัวเล็กผิด" },
+    "528": { "from": "TRUE", "to": "true", "why": "โปรแกรมสเปรดชีตแปลงคำว่า true เป็นค่า TRUE" },
+    "2148": { "from": "FALSE", "to": "false", "why": "โปรแกรมสเปรดชีตแปลงคำว่า false เป็นค่า FALSE" }
+  },
+  "wiktionary": {
+    "inputDir": "input",
+    "filePattern": "\\.jsonl(\\.gz)?$",
+    "note": "ไฟล์ English ของ kaikki.org (kaikki.org-dictionary-English.jsonl) — อ่านแบบ stream ไม่โหลดทั้งไฟล์เข้าหน่วยความจำ",
+    "maxExamplesKept": 5,
+    "maxSensesPerPos": 8,
+    "maxFamily": 12,
+    "maxListed": 12
+  },
+  "batchSize": 100,
+  "tags": ["daily-life", "science", "health", "education", "work", "travel", "emotion", "society", "technology", "nature"],
+  "posAllowed": ["noun", "verb", "adjective", "adverb", "preposition", "conjunction", "pronoun", "determiner", "interjection", "number", "modal", "auxiliary", "particle"],
+  "cefrAllowed": ["A1", "A2", "B1", "B2", "C1"],
+  "thSources": ["wiktionary", "claude"],
+  "credits": {
+    "list": "NGSL-GR 1.0 (New General Service List — Gradient Rank) จาก newgeneralservicelist.com — CC BY-SA 4.0",
+    "wiktionary": "ความหมายอังกฤษ คำแปลไทย IPA คำพ้อง/คำตรงข้าม/ตระกูลคำ มาจาก Wiktionary (CC BY-SA 4.0) ผ่านข้อมูลสกัดของ kaikki.org (Wiktextract — Tatu Ylonen, LREC 2022)",
+    "claude": "คำแปลไทยที่ Wiktionary ไม่มี ประโยคตัวอย่าง วลี แท็ก และระดับ CEFR เขียนโดย Claude (Anthropic) และตรวจทานโดยผู้ดูแล",
+    "license": "ไฟล์ใน /vocab เผยแพร่ภายใต้ CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)"
+  }
+}

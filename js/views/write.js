@@ -6,7 +6,8 @@ import * as hwr from "../handwriting-render.js";
 import * as practice from "../practice.js";
 import { InkPad } from "../handwriting-pad.js";
 import { ActivityClock, FLUSH_EVERY_MS, toSession } from "../activity.js";
-import { wordKey, thDisplay } from "../lexicon.js";
+import { wordKey } from "../lexicon.js";
+import { vocab } from "../vocab.js";
 import { HW } from "../data/handwriting-config.js";
 import { h } from "../dom.js";
 
@@ -177,8 +178,8 @@ export function render(root, { toast }) {
     drawSources();
     drawPractice();
     if (!current.th) {
-      const r = await db.lexiconGet(item.wordKey).catch(() => null);
-      if (current?.item === item && r?.doc?.th?.length) { current.th = thDisplay(r.doc.th); if (current.level === "recall") drawPractice({ keepPad: true }); }
+      const w = vocab.peek(item.wordKey);
+      if (current?.item === item && w?.th?.length) { current.th = w.th.map((t) => t.text).join(" / "); if (current.level === "recall") drawPractice({ keepPad: true }); }
     }
   }
 

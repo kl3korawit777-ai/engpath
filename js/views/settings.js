@@ -7,6 +7,8 @@ import { sync as syncStats } from "../statsync.js";
 import { APP_VERSION, CHANGELOG } from "../version.js";
 import { lexiconConfig, saveLexiconConfig } from "../localsettings.js";
 import { DEFAULT_CLAUDE_MODEL } from "../lexicon.js";
+import { mountPlan } from "./newwords.js";
+import { mountMigration } from "./migration.js";
 
 export function render(el, { toast } = {}) {
   el.innerHTML = `
@@ -82,6 +84,7 @@ export function render(el, { toast } = {}) {
   const about = h("section", { class: "card stack", id: "about" },
     h("h2", { text: "เกี่ยวกับแอป" }),
     h("div", { class: "row" }, h("strong", { class: "mono", text: `EngPath v${APP_VERSION}` }), cacheLine),
+    h("div", {}, h("a", { class: "btn btn--secondary", href: "#/credits", text: "เครดิตและสัญญาอนุญาตของคลังคำศัพท์" })),
     h("details", { class: "lex-details" }, h("summary", { text: "มีอะไรใหม่ (changelog)" }),
       ...CHANGELOG.map((c) => h("div", { class: "stack" }, h("strong", { text: `v${c.version} — ${c.title}` }), h("ul", { class: "plain-list" }, ...c.notes.map((n) => h("li", { text: n })))))));
   // ---- สถิติ (dailyStats) ----
@@ -114,31 +117,29 @@ export function render(el, { toast } = {}) {
     h("h2", { text: "Export Obsidian vault" }),
     h("p", { class: "muted", text: "หนึ่งคำต่อหนึ่งไฟล์ .md พร้อม frontmatter, แท็ก, โน้ตที่คงลิงก์ [[ ]] และส่วน Related — เป็นสำเนา ณ ตอนนี้ แก้ใน Obsidian ไม่ย้อนกลับมาที่แอป" }),
     h("label", { class: "field" }, h("span", { text: "ขอบเขต" }), vaultScope),
-    h("label", { class: "row check" }, vaultLex, h("span", { text: "รวมความหมาย/ตัวอย่าง/คำพ้องจากคลังคำที่มีในเครื่องนี้ (ไม่เรียก API หรือ server)" })),
+    h("label", { class: "row check" }, vaultLex, h("span", { text: "รวมความหมาย/ตัวอย่าง/คำพ้องจากคลังกลาง (อ่านจากไฟล์ในแอป ไม่เรียก API หรือ server)" })),
     h("div", {}, vaultBtn), vaultMsg);
-  // ---- แหล่งข้อมูลคำศัพท์ (เก็บในเครื่องนี้เท่านั้น) ----
+  // ---- Claude API key (เก็บในเครื่องนี้เท่านั้น) — ใช้กับ Journal ตรวจ AI และแบบฝึกเจาะจุด ไม่ได้ใช้กับคำศัพท์แล้ว ----
   const cfg = lexiconConfig();
   const f = {
-    email: h("input", { class: "input", type: "email", value: cfg.email, placeholder: "ไม่บังคับ เช่น you@example.com", autocomplete: "off" }),
     apiKey: h("input", { class: "input", type: "password", value: cfg.apiKey, placeholder: "sk-ant-… (ไม่บังคับ)", autocomplete: "off", spellcheck: false }),
     model: h("input", { class: "input", value: cfg.model === DEFAULT_CLAUDE_MODEL ? "" : cfg.model, placeholder: `ค่าเริ่มต้น: ${DEFAULT_CLAUDE_MODEL}`, autocomplete: "off", spellcheck: false }),
   };
   const cfgMsg = h("p", { class: "muted", role: "status" });
   const field = (label, input, hint) => h("label", { class: "field" }, h("span", { text: label }), input, hint ? h("small", { class: "muted", text: hint }) : null);
   const lexCard = h("section", { class: "card stack" },
-    h("h2", { text: "แหล่งข้อมูลคำศัพท์" }),
+    h("h2", { text: "Claude API key (ไม่บังคับ)" }),
     h("p", { class: "muted", text: "ค่าเหล่านี้เก็บในเครื่องนี้เท่านั้น (localStorage) ไม่ถูกซิงก์ขึ้น Firestore และไม่รวมในไฟล์ Export ต้องตั้งแยกในแต่ละเครื่อง" }),
-    field("อีเมลสำหรับ MyMemory", f.email, "ใส่อีเมลจริงเพื่อเพิ่มโควตาแปลฟรีต่อวัน (ส่งไปกับคำขอแปลเท่านั้น)"),
-    field("Claude API key", f.apiKey, "ใช้กับปุ่ม “ให้ AI ช่วย” เท่านั้น เรียกตรงจากเบราว์เซอร์ไปที่ api.anthropic.com ใครใช้เครื่องนี้ได้ก็เห็นคีย์ได้ — ตั้งวงเงินในคอนโซลและใช้เฉพาะเครื่องที่ไว้ใจ"),
+    field("Claude API key", f.apiKey, "ใช้กับ Journal (ตรวจด้วย AI) และแบบฝึกเจาะจุดเท่านั้น — คำศัพท์มาจากคลังกลางในแอป ไม่ต้องใช้ key · เรียกตรงจากเบราว์เซอร์ไปที่ api.anthropic.com ใครใช้เครื่องนี้ได้ก็เห็นคีย์ได้ — ตั้งวงเงินในคอนโซลและใช้เฉพาะเครื่องที่ไว้ใจ"),
     field("ชื่อรุ่น Claude", f.model, "เว้นว่างเพื่อใช้ค่าเริ่มต้น ดูชื่อรุ่นที่ใช้ได้ในเอกสารของ Anthropic"),
     h("div", { class: "row" },
       h("button", { class: "btn", type: "button", text: "บันทึก", onclick: () => {
-        const ok = saveLexiconConfig({ email: f.email.value, apiKey: f.apiKey.value, model: f.model.value });
+        const ok = saveLexiconConfig({ email: cfg.email, apiKey: f.apiKey.value, model: f.model.value });
         cfgMsg.textContent = ok ? "บันทึกในเครื่องนี้แล้ว" : "บันทึกไม่ได้ — เบราว์เซอร์บล็อกการเก็บข้อมูล (เช่น private mode)";
       } }),
       h("button", { class: "btn btn--secondary", type: "button", text: "ล้างคีย์", onclick: () => {
         f.apiKey.value = "";
-        saveLexiconConfig({ email: f.email.value, apiKey: "", model: f.model.value });
+        saveLexiconConfig({ email: cfg.email, apiKey: "", model: f.model.value });
         cfgMsg.textContent = "ล้าง API key ออกจากเครื่องนี้แล้ว";
       } })),
     cfgMsg);
@@ -157,8 +158,12 @@ export function render(el, { toast } = {}) {
         h("option", { value: "print", text: "Print (Andika)", selected: (st.handwritingStyle || "print") === "print" }),
         h("option", { value: "cursive", text: "Cursive (Playwrite US Trad)", selected: st.handwritingStyle === "cursive" }))),
     h("div", {}, h("a", { class: "btn btn--secondary", href: "#/onboarding", text: st.onboarding?.done ? "ทำ Onboarding ใหม่ / แก้เป้าหมาย" : "ทำ Onboarding (ตั้งเป้าหมายและขั้นเริ่มต้น)" })));
-  el.append(plan, lexCard, statsCard, backup, vault, about);
+  el.append(plan);
+  const offVocab = mountPlan(el, { toast });
+  const offMigration = mountMigration(el, { toast });
+  el.append(lexCard, statsCard, backup, vault, about);
 
   const text = { synced: "ข้อมูลทั้งหมดซิงก์ขึ้นเซิร์ฟเวอร์แล้ว", pending: "มีข้อมูลรอส่งขึ้นเซิร์ฟเวอร์ จะส่งอัตโนมัติเมื่อออนไลน์", offline: "ออฟไลน์ — ใช้งานต่อได้ ข้อมูลจะซิงก์เมื่อต่อเน็ต" };
-  return db.onSync((s) => { el.querySelector("#syncText").textContent = text[s]; });
+  const offSync = db.onSync((s) => { el.querySelector("#syncText").textContent = text[s]; });
+  return () => { offSync(); offVocab(); offMigration(); };
 }

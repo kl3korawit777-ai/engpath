@@ -1,6 +1,6 @@
 // Service worker: cache app shell แบบมีเวอร์ชัน + cache ฟอนต์/Firebase SDK ตอนใช้งานจริง
 // เปลี่ยน VERSION ทุกครั้งที่ deploy ไฟล์ในรายการ SHELL เพื่อให้เครื่องผู้ใช้ดึงชุดใหม่
-const VERSION = "v24";
+const VERSION = "v33";
 const SHELL_CACHE = `engpath-shell-${VERSION}`;
 const RUNTIME_CACHE = `engpath-runtime-${VERSION}`;
 
@@ -19,6 +19,14 @@ const SHELL = [
   "js/errlog.js",
   "js/backup.js",
   "js/lexicon.js",
+  "js/vocab.js",
+  "js/newwords.js",
+  "js/cardview.js",
+  "js/placement.js",
+  "js/wordnav.js",
+  "js/libentry.js",
+  "js/migrate.js",
+  "vocab/index.json",
   "js/library.js",
   "js/roadmap-logic.js",
   "js/practice.js",
@@ -44,7 +52,6 @@ const SHELL = [
   "js/layout.js",
   "js/layout-worker.js",
   "vendor/cytoscape-3.34.4.esm.min.mjs",
-  "js/wordlookup.js",
   "js/speech.js",
   "js/recordings.js",
   "js/player.js",
@@ -60,7 +67,6 @@ const SHELL = [
   "js/localsettings.js",
   "js/views/today.js",
   "js/views/cards.js",
-  "js/views/addword.js",
   "js/views/library.js",
   "js/views/roadmap.js",
   "js/views/practice.js",
@@ -78,6 +84,10 @@ const SHELL = [
   "js/views/onboarding.js",
   "js/views/errors.js",
   "js/views/settings.js",
+  "js/views/credits.js",
+  "js/views/newwords.js",
+  "js/views/migration.js",
+  "js/views/placement.js",
   "icons/icon-192.png",
   "icons/icon-512.png",
   "icons/apple-touch-icon.png",

@@ -1,4 +1,5 @@
 import * as db from "./db.js";
+import { vocab, describeError } from "./vocab.js";
 
 const ROUTES = {
   today: { label: "วันนี้", icon: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', load: () => import("./views/today.js") },
@@ -17,6 +18,8 @@ const ROUTES = {
   graph: { more: true, label: "กราฟคำ", icon: '<circle cx="6" cy="7" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M8 8l3 8M16.5 8l-3.5 8M8.2 7h7.6"/>', load: () => import("./views/graph.js") },
   library: { more: true, label: "คลังคำ", icon: '<path d="M4 4h5v16H4zM11 4h5v16h-5zM18 6l3 .8-3.6 13.2-3-.8z"/>', load: () => import("./views/library.js") },
   errors: { more: true, label: "Error Log", icon: '<path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.01"/>', load: () => import("./views/errors.js") },
+  placement: { hidden: true, navGroup: "settings", label: "วัดระดับ", icon: "", load: () => import("./views/placement.js") },
+  credits: { hidden: true, navGroup: "settings", label: "เครดิต", icon: "", load: () => import("./views/credits.js") },
   onboarding: { hidden: true, label: "Onboarding", icon: "", load: () => import("./views/onboarding.js") },
   settings: { more: true, label: "ตั้งค่า", icon: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>', load: () => import("./views/settings.js") },
 };
@@ -159,6 +162,10 @@ async function startRoute() {
   const token = ++renderToken;
   shell.view.textContent = "กำลังโหลดข้อมูล…";
   await db.whenReady();
+  if (token !== renderToken) return;
+  // คลังคำศัพท์ต้องอยู่ในหน่วยความจำก่อน เพราะบัตรจากคลังเก็บแค่ความคืบหน้าและอ่านเนื้อหาจากคลัง (ครั้งแรกโหลดจากเน็ต ครั้งต่อไปจาก cache ของ service worker)
+  shell.view.textContent = "กำลังโหลดคลังคำศัพท์…";
+  try { await vocab.loadAll(); } catch (e) { toast(describeError(e)); }
   if (token !== renderToken) return;
   import("./statsync.js").then((m) => m.startStatsSync()).catch(console.error);   // dailyStats: สร้างย้อนหลัง/อัปเดตเมื่อมี event ใหม่
   if (!onboardingChecked) {

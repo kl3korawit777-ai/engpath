@@ -7,6 +7,7 @@ import * as rl from "../roadmap-logic.js";
 import { ROADMAP } from "../data/roadmap.js";
 import { techniqueScores, leastUsed } from "../techscore.js";
 import { setErrorsTab } from "../scope.js";
+import { vocab } from "../vocab.js";
 import { h } from "../dom.js";
 
 const CHART = "../../vendor/chart-4.5.1.umd.js";
@@ -152,6 +153,7 @@ export function render(root) {
       { head: ["", "Print", "Cursive"], rows: hw.labels.map((l, i) => [l, hw.print[i] ?? "—", hw.cursive[i] ?? "—"]).filter((r) => r[1] !== "—" || r[2] !== "—") });
 
     body.replaceChildren(rangeBar, kpiRow,
+      levelCard(cards, states),
       h("div", { class: "grid2 charts" }, timeCard.el, hmCard, ioCard.el, vocabCard.el, fcCard.el, errCard.el, hwCard.el),
       techniqueCard(map, now),
       roadmapCard(st));
@@ -205,6 +207,24 @@ export function render(root) {
       ] },
       options: { scales: { x: axis, y: yaxis({ max: 100 }) } },
     });
+  }
+
+  // ---------- ความคืบหน้าตามระดับของคลังกลาง ----------
+  function levelCard(cards, states) {
+    const idx = vocab.cachedIndex();
+    if (!idx) return h("div", { class: "notice", text: "ยังโหลดคลังคำศัพท์ไม่เสร็จ จึงยังไม่แสดงความคืบหน้าตามระดับ" });
+    const rows = dl.levelProgress({
+      levels: idx.levels, cards, states, skipped: db.skippedKeys(),
+      levelOf: (c) => c.level ?? vocab.peek(c.en)?.level ?? 0, skippedLevelOf: (k) => vocab.peek(k)?.level ?? 0,
+      isKnown: (s) => lib.memoryStatus(s) === "known",
+    });
+    return h("section", { class: "card stack", id: "level-progress" },
+      h("h2", { text: "ความคืบหน้าตามระดับ" }),
+      h("p", { class: "muted", text: "จำได้ = บัตรที่ interval ≥ 21 วัน · รู้แล้ว = คำที่คุณกดข้าม · แถบ = (จำได้ + รู้แล้ว) / คำทั้งหมดของระดับ" }),
+      h("div", { class: "table-wrap" }, h("table", { class: "data-table" },
+        h("thead", {}, h("tr", {}, ...["ระดับ", "ทั้งหมด", "กำลังเรียน", "จำได้", "รู้แล้ว", "ความคืบหน้า"].map((x) => h("th", { scope: "col", text: x })))),
+        h("tbody", {}, ...rows.map((r) => h("tr", {}, h("th", { scope: "row", text: String(r.level) }), h("td", { text: String(r.total) }), h("td", { text: String(r.learning) }), h("td", { text: String(r.known) }), h("td", { text: String(r.skipped) }),
+          h("td", {}, h("div", { class: "progress", role: "img", "aria-label": `ระดับ ${r.level} คืบหน้า ${r.pct}%` }, h("i", { style: `width:${Math.min(100, r.pct)}%` })), h("span", { class: "mono muted", text: ` ${r.pct}%` }))))))));
   }
 
   // ---------- Technique Score ----------

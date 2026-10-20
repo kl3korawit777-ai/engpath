@@ -177,3 +177,21 @@ export const formatDuration = (sec) => {
   const m = Math.round(sec / 60);
   return m < 60 ? `${m} นาที` : `${Math.floor(m / 60)} ชม. ${m % 60} นาที`;
 };
+
+// ---------- ความคืบหน้าตามระดับของคลังกลาง ----------
+/**
+ * levels: [{ level, count }] จาก vocab index · cards: บัตรที่กำลังเรียน (รวมที่จำได้) · states: Map cardId → state SRS
+ * skipped: Set ของ wordKey ที่กด “รู้แล้ว” · levelOf(card) → ระดับ (0 = ไม่อยู่ในคลัง) · isKnown(state) → boolean
+ * คืน [{ level, total, learning, known, skipped, pct }] pct = (known + skipped) / total
+ */
+export function levelProgress({ levels, cards, states, skipped = new Set(), levelOf, isKnown, skippedLevelOf }) {
+  const rows = new Map(levels.map((l) => [l.level, { level: l.level, total: l.count, learning: 0, known: 0, skipped: 0, pct: 0 }]));
+  for (const c of cards) {
+    const r = rows.get(levelOf(c));
+    if (!r) continue;
+    if (isKnown(states.get(c.id))) r.known++; else r.learning++;
+  }
+  for (const k of skipped) { const r = rows.get(skippedLevelOf(k)); if (r) r.skipped++; }
+  for (const r of rows.values()) r.pct = r.total ? Math.round(((r.known + r.skipped) / r.total) * 1000) / 10 : 0;
+  return [...rows.values()].sort((a, b) => a.level - b.level);
+}

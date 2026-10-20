@@ -2,11 +2,11 @@
 import * as db from "../db.js";
 import * as srs from "../srs.js";
 import * as rd from "../reading.js";
-import { lookupWord, mapLimit } from "../wordlookup.js";
+import { findInLibrary } from "../wordnav.js";
+import { setWordStatus } from "./newwords.js";
 import { ActivityClock, FLUSH_EVERY_MS, toSession } from "../activity.js";
 import { READING, VERDICTS } from "../data/reading-config.js";
 import { LEVEL_OPTIONS } from "../clips.js";
-import { wordKey } from "../lexicon.js";
 import { h } from "../dom.js";
 
 const STATUS_HINT = {
@@ -61,7 +61,7 @@ export function render(root, { toast }) {
     h("div", { class: "row" },
       h("button", { class: "btn", type: "button", text: "วิเคราะห์", onclick: analyze }),
       h("button", { class: "btn btn--secondary", type: "button", text: "ล้าง", onclick: () => { area.value = ""; text = ""; tokens = []; classified = []; updateCount(); drawResult(); } })),
-    h("p", { class: "muted", text: "ทุกคำถือว่า “รู้” เป็นค่าเริ่มต้น แตะคำที่ไม่รู้ได้ · คำที่อยู่ในบัตรคำสถานะ “จำได้” รู้อัตโนมัติ · คำจากบัตร “ใหม่/กำลังเรียน” นับเป็นไม่รู้ (เฉพาะบัตรคำเดี่ยว วลีไม่ถูกนับ)" }));
+    h("p", { class: "muted", text: "ทุกคำถือว่า “รู้” เป็นค่าเริ่มต้น แตะคำที่ไม่รู้ได้ · คำที่อยู่ในบัตรคำสถานะ “จำได้” หรือที่คุณกด “รู้แล้ว” รู้อัตโนมัติ · คำจากบัตร “ใหม่/กำลังเรียน” นับเป็นไม่รู้ (เฉพาะบัตรคำเดี่ยว วลีไม่ถูกนับ) · เพิ่มเรียนได้เฉพาะคำที่อยู่ในคลังกลาง" }));
   const updateCount = () => { const n = rd.tokenize(area.value).length; countEl.textContent = `${n.toLocaleString()} คำ${n > READING.maxWords ? ` (จะวิเคราะห์เฉพาะ ${READING.maxWords.toLocaleString()} คำแรก)` : ""}`; };
   area.addEventListener("input", updateCount);
   updateCount();
@@ -71,7 +71,7 @@ export function render(root, { toast }) {
 
   function loadIndex() {
     const cards = db.list("cards");
-    index = rd.cardWordIndex(cards, srs.stateMap(cards, db.list("reviews")));
+    index = rd.addKnownWords(rd.cardWordIndex(cards, srs.stateMap(cards, db.list("reviews"))), db.skippedKeys());
   }
 
   function analyze() {
@@ -168,7 +168,7 @@ export function render(root, { toast }) {
       st.unique.length ? h("div", { class: "row" },
         h("button", { class: "btn btn--secondary btn--chip", type: "button", disabled: adding || !addable.length, text: "เลือกทั้งหมด", onclick: () => { addable.forEach((u) => selected.add(u.key)); drawResultKeepText(); } }),
         h("button", { class: "btn btn--secondary btn--chip", type: "button", disabled: adding, text: "ไม่เลือก", onclick: () => { selected.clear(); drawResultKeepText(); } }),
-        h("button", { class: "btn", type: "button", id: "add-btn", disabled: adding || !selected.size, text: `เพิ่มเป็นบัตรคำ (${selected.size})`, onclick: bulkAdd })) : h("p", { class: "muted", text: "ยังไม่มีคำที่ไม่รู้ — แตะคำในข้อความด้านบน" }),
+        h("button", { class: "btn", type: "button", id: "add-btn", disabled: adding || !selected.size, text: `เริ่มเรียนคำที่เลือก (${selected.size})`, onclick: bulkAdd })) : h("p", { class: "muted", text: "ยังไม่มีคำที่ไม่รู้ — แตะคำในข้อความด้านบน" }),
       existing.length ? h("p", { class: "muted", text: `${existing.length} คำมีบัตรอยู่แล้ว ไม่ต้องเพิ่มซ้ำ` }) : null,
       st.unique.length ? h("ul", { class: "list" }, ...rows) : null,
       report ? reportBox() : null);
@@ -176,7 +176,7 @@ export function render(root, { toast }) {
 
   function refreshAddBtn() {
     const b = document.getElementById("add-btn");
-    if (b) { b.textContent = `เพิ่มเป็นบัตรคำ (${selected.size})`; b.disabled = adding || !selected.size; }
+    if (b) { b.textContent = `เริ่มเรียนคำที่เลือก (${selected.size})`; b.disabled = adding || !selected.size; }
   }
 
   function drawResultKeepText() {
@@ -186,34 +186,29 @@ export function render(root, { toast }) {
 
   function reportBox() {
     return h("div", { class: "notice stack", role: "status" },
-      report.running ? h("div", { text: `กำลังดึงคำแปลและสร้างบัตร ${report.done}/${report.total}…` }) : h("strong", { text: `เพิ่มบัตรคำแล้ว ${report.added.length} ใบ` }),
+      report.running ? h("div", { text: `กำลังเพิ่มคำ ${report.done}/${report.total}…` }) : h("strong", { text: `เริ่มเรียนแล้ว ${report.added.length} คำ` }),
       report.added.length ? h("div", { class: "muted", text: `เพิ่ม: ${report.added.join(", ")}` }) : null,
       report.failed.length ? h("div", {}, h("div", { class: "bad", text: `เพิ่มไม่ได้ ${report.failed.length} คำ:` }), h("ul", { class: "plain-list" }, ...report.failed.map((f) => h("li", { text: `${f.word} — ${f.reason}` })))) : null);
   }
 
-  async function bulkAdd() {
+  // คำที่เลือกต้องอยู่ในคลังกลาง (จับรูปผันอย่าง running → run ให้) — เพิ่มคำนอกคลังไม่ได้
+  function bulkAdd() {
     if (adding || !selected.size) return;
     const words = [...selected];
-    adding = true;
-    report = { running: true, done: 0, total: words.length, added: [], failed: [] };
-    drawResultKeepText();
-    const existingKeys = new Set(db.list("cards").map((c) => wordKey(c.en)));
-    await mapLimit(words, 3, async (word) => {
-      if (existingKeys.has(wordKey(word))) { report.failed.push({ word, reason: "มีบัตรคำนี้อยู่แล้ว" }); return; }
-      const { lex, from } = await lookupWord(word);
-      if (!lex) { report.failed.push({ word, reason: from === "offline" ? "ออฟไลน์และคำนี้ยังไม่เคยอยู่ในคลัง — ต่อเน็ตแล้วลองใหม่" : "ดึงข้อมูลคำไม่สำเร็จ (ทุกแหล่งใช้ไม่ได้ตอนนี้)" }); return; }
-      const res = rd.buildCard({ word, lex, sentence: rd.sentenceFor(text, word) });
-      if (res.error) { report.failed.push({ word, reason: res.error }); return; }
-      db.create("cards", res.card);
-      existingKeys.add(wordKey(word));
-      report.added.push(word);
-    }, (done) => { report.done = done; drawResultKeepText(); });
-    adding = false;
-    report.running = false;
-    for (const w of report.added) selected.delete(w);
-    loadIndex(); reclassify();                                   // คำที่เพิ่มแล้วกลายเป็นบัตร “ใหม่” (ยังนับเป็นไม่รู้จนกว่าจะจำได้)
+    report = { running: false, done: words.length, total: words.length, added: [], failed: [] };
+    const taken = new Set([...db.list("cards").map((c) => c.wordKey || String(c.en || "").trim().toLowerCase()), ...db.skippedKeys()]);
+    for (const word of words) {
+      const w = findInLibrary(word);
+      if (!w) { report.failed.push({ word, reason: "ไม่อยู่ในคลังกลาง" }); continue; }
+      if (taken.has(w.wordKey) || taken.has(word.toLowerCase())) { report.failed.push({ word, reason: `มีคำ “${w.word}” ในการเรียนอยู่แล้ว` }); continue; }
+      setWordStatus(w, "learning");
+      taken.add(w.wordKey);
+      report.added.push(w.word.toLowerCase() === word.toLowerCase() ? w.word : `${word} → ${w.word}`);
+    }
+    for (const w of words) selected.delete(w);
+    loadIndex(); reclassify();                                   // คำที่เริ่มเรียนแล้วกลายเป็นบัตร “ใหม่” (ยังนับเป็นไม่รู้จนกว่าจะจำได้)
     drawResult();
-    toast(`เพิ่มบัตรคำ ${report.added.length} ใบ${report.failed.length ? ` · ไม่สำเร็จ ${report.failed.length}` : ""}`);
+    toast(`เริ่มเรียน ${report.added.length} คำ${report.failed.length ? ` · ไม่สำเร็จ ${report.failed.length}` : ""}`);
   }
 
   // ================= reading log =================

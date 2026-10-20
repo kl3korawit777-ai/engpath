@@ -2,3 +2,9 @@
 node_modules/
 .claude/
 docs/*.pdf
+tools/build-vocab/cache/
+tools/build-vocab/.env
+tools/build-vocab/*.key
+tools/build-vocab/input/*.csv
+tools/build-vocab/input/*.jsonl
+tools/build-vocab/input/*.jsonl.gz

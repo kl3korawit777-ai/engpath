@@ -103,12 +103,11 @@ test("buildReadingLog: สถิติ + คำที่ไม่รู้ ≤ 5
   assert.equal(rd.buildReadingLog({ source: "", st, durationSec: -5, now: 1 }).durationSec, 0);
 });
 
-test("buildCard: ใช้คำแปลใน lexicon + ประโยคต้นฉบับ; ขาดคำแปล/ประโยค/ประโยคสั้น → error ภาษาไทย", () => {
-  const lex = { th: [{ sense: "", text: "จับต้องได้" }], ipa: "/ˈtæn.dʒə.bəl/", freq: 5, posTags: ["adjective"], meanings: [] };
-  const ok = rd.buildCard({ word: "tangible", lex, sentence: "A tangible result appeared yesterday." });
-  assert.deepEqual(ok.card, { en: "tangible", th: "จับต้องได้", example: "A tangible result appeared yesterday.", ipa: "/ˈtæn.dʒə.bəl/", tags: [], pos: "adjective", freq: 5, source: "reading" });
-  assert.match(rd.buildCard({ word: "x", lex: null, sentence: "a b c d" }).error, /ดึงข้อมูล/);
-  assert.match(rd.buildCard({ word: "x", lex: { th: [] }, sentence: "a b c d" }).error, /ไม่มีคำแปล/);
-  assert.match(rd.buildCard({ word: "x", lex, sentence: null }).error, /ประโยคต้นฉบับ/);
-  assert.match(rd.buildCard({ word: "x", lex, sentence: "Too short." }).error, /อย่างน้อย 4 คำ/);
+test("addKnownWords: คำที่กด “รู้แล้ว” กลายเป็น known (รวมรูปผัน) และข้ามวลีหลายคำ", () => {
+  const idx = rd.addKnownWords(new Map([["tangible", "learning"]]), ["Run", "look up", "tangible"]);
+  assert.equal(rd.statusOfWord("running", idx), "known");
+  assert.equal(rd.statusOfWord("runs", idx), "known");
+  assert.equal(rd.statusOfWord("tangible", idx), "known");
+  assert.equal(rd.statusOfWord("look", idx), null);
 });
+

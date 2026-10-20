@@ -6,7 +6,7 @@ import { findExistingError } from "../journal.js";
 import { splitSentences } from "../clips.js";
 import { tokenize } from "../reading.js";
 import { wordKey } from "../lexicon.js";
-import { setAddWordPrefill } from "../scope.js";
+import { gotoLibraryWord } from "../wordnav.js";
 import { h } from "../dom.js";
 
 // ข้อสอบที่กำลังทำอยู่คงไว้ระดับ module: ออกไปหน้าอื่นแล้วกลับมาทำต่อได้ (เวลานับจากนาฬิกาจริง จึงเดินต่อและหมดเวลาได้ตามจริง)
@@ -217,7 +217,7 @@ export function render(root, { toast }) {
     if (!it) return h("div", { class: "card stack" }, h("strong", { text: `ข้อ ${i + 1}` }), h("p", { class: "muted", text: "ข้อสอบข้อนี้ถูกลบหรือแก้ไขแล้ว จึงแสดงรายละเอียดไม่ได้ (ผลคะแนนยังอยู่)" }));
     const done = added.has(`${key}|${a.qid}`);
     const sel = h("select", { class: "input select", "aria-label": "หมวดข้อผิด" }, ...el.CATEGORIES.map((c) => h("option", { value: c, text: c, selected: c === ex.CATEGORY_OF_SECTION[it.section] })));
-    const known = new Set(db.list("cards").map((c) => wordKey(c.en)));
+    const known = new Set([...db.list("cards").map((c) => wordKey(c.en)), ...db.skippedKeys()]);
     const words = [...new Set(tokenize(`${it.question} ${it.options.join(" ")}`).map((t) => t.key).filter((w) => w.length >= 4 && !known.has(w)))].slice(0, 12);
     return h("div", { class: "card stack" },
       h("div", { class: "row" }, h("strong", { text: `ข้อ ${i + 1}` }), h("span", { class: "badge", text: ex.SECTIONS[it.section] }), a.chosen === null ? h("span", { class: "badge", text: "ไม่ได้ตอบ" }) : null, a.flagged ? h("span", { class: "badge", text: "🚩" }) : null, h("span", { class: "mono muted", text: `${a.sec}s` })),
@@ -226,9 +226,9 @@ export function render(root, { toast }) {
       it.explanation ? h("p", { class: "muted", text: `คำอธิบาย: ${it.explanation}` }) : null,
       !a.correct ? h("div", { class: "row" }, sel,
         h("button", { class: "btn", type: "button", disabled: done, text: done ? "เพิ่มเข้า Error Log แล้ว ✓" : "เพิ่มเข้า Error Log", onclick: () => addToErrorLog(it, a.chosen, sel.value, `${key}|${a.qid}`) })) : null,
-      !a.correct && words.length ? h("div", { class: "stack" }, h("small", { class: "muted", text: "คำศัพท์ในข้อนี้ — กดเพื่อเพิ่มเป็นบัตรคำ" }),
+      !a.correct && words.length ? h("div", { class: "stack" }, h("small", { class: "muted", text: "คำศัพท์ในข้อนี้ — กดเพื่อดูในคลังคำ (เริ่มเรียนได้ถ้าอยู่ในคลัง)" }),
         h("div", { class: "row lib-chips" }, ...words.map((w) => h("button", { class: "btn btn--chip btn--secondary", type: "button", text: w,
-          onclick: () => { const sent = splitSentences(it.question).find((s) => tokenize(s).some((t) => t.key === w)) || ""; setAddWordPrefill({ word: w, example: sent }); location.hash = "#/cards"; } })))) : null);
+          onclick: () => gotoLibraryWord(w, toast) })))) : null);
   }
 
   function addToErrorLog(it, chosen, category, mark) {

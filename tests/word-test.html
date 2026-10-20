@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>word view harness</title>
+<script type="importmap">{ "imports": { "/js/db.js": "/tests/mock-db-nw.js", "../db.js": "/tests/mock-db-nw.js" } }</script>
+<link rel="stylesheet" href="/css/tokens.css"><link rel="stylesheet" href="/css/app.css"></head>
+<body><main class="main" id="view"></main><div id="toast" class="toast" hidden></div>
+<script type="module">
+  import { vocab } from "/js/vocab.js";
+  import * as db from "/tests/mock-db-nw.js";
+  await vocab.loadAll();
+  const q = new URLSearchParams(location.search);
+  if (q.get("learn")) db.create("cards", { id: q.get("learn"), wordKey: q.get("learn"), source: "library", level: 1, rank: 1, status: "learning", addedDay: "2026-10-20" });
+  const m = await import("/js/views/word.js");
+  m.render(document.getElementById("view"), { param: q.get("p") || "monday", toast: (t) => { const el = document.getElementById("toast"); el.textContent = t; el.hidden = false; } });
+  window.__ready = true;
+</script></body></html>

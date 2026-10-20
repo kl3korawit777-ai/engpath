@@ -122,17 +122,9 @@ export function buildReadingLog({ source, level, st, durationSec, now }, cfg = R
   };
 }
 
-// ---------- สร้างบัตรคำจากคำที่ไม่รู้ ----------
-import { validateCard } from "./srs.js";
-import { thDisplay, suggestPos } from "./lexicon.js";
-
-/** ใช้ข้อมูลใน lexicon + ประโยคต้นฉบับเป็นตัวอย่าง คืน { card } หรือ { error } (ภาษาไทย) — กฎ Chunking: ตัวอย่างต้อง ≥ 4 คำ */
-export function buildCard({ word, lex, sentence }) {
-  if (!lex) return { error: "ดึงข้อมูลคำไม่ได้" };
-  const th = thDisplay(lex.th);
-  if (!th) return { error: "ไม่มีคำแปล — เพิ่มเองที่ “บัตรคำ → เพิ่มคำ”" };
-  if (!sentence) return { error: "ไม่พบประโยคต้นฉบับในข้อความ" };
-  const card = { en: word, th, example: sentence, ipa: lex.ipa || "", tags: [], pos: suggestPos({ ...lex, word }) || null, freq: lex.freq ?? null, source: "reading" };
-  const err = validateCard(card);
-  return err ? { error: err } : { card };
+// ---------- คำที่ “รู้แล้ว” จากคลังกลาง ----------
+/** เพิ่มคำที่ผู้ใช้กด “รู้แล้ว” (ข้ามคำ) เข้าดัชนีเป็นสถานะ known — ไม่ทับสถานะที่ดีกว่าเดิม (known เป็นสูงสุดอยู่แล้ว) */
+export function addKnownWords(index, keys) {
+  for (const k of keys) { const en = String(k).trim().toLowerCase(); if (!en || /s/.test(en)) continue; for (const st of stems(en)) index.set(st, "known"); }
+  return index;
 }

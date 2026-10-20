@@ -8,7 +8,7 @@ import { isValidFamily } from "./graph.js";
 import { isValidSession } from "./interleave.js";
 import { isValidQuestionDoc, isValidExamSet, isValidAttempt } from "./exam.js";
 
-export const COLLECTIONS = ["settings", "cards", "errors", "lexicon", "smartFolders", "handwritingWords", "clips", "playlists", "reviews", "sessions", "errorEvents", "checkpoints", "practiceEvents", "handwritingAttempts", "handwritingImages", "shadowingEvents", "readings", "journal", "links", "wordFamilies", "interleavingSessions", "questions", "examSets", "examAttempts"];
+export const COLLECTIONS = ["settings", "cards", "errors", "smartFolders", "handwritingWords", "clips", "playlists", "reviews", "sessions", "errorEvents", "checkpoints", "practiceEvents", "handwritingAttempts", "handwritingImages", "shadowingEvents", "readings", "journal", "links", "wordFamilies", "interleavingSessions", "questions", "examSets", "examAttempts"];
 const EVENT_COLS = new Set(["reviews", "sessions", "errorEvents", "checkpoints", "practiceEvents", "shadowingEvents", "handwritingAttempts", "handwritingImages", "readings"]);
 export const FORMAT = { app: "engpath", version: 1 };
 
@@ -17,6 +17,10 @@ export const SESSION_SKILLS = ["srs", "input", "output", "weak", "shadowing", "w
 const num = (v) => typeof v === "number" && Number.isFinite(v);
 const str = (v) => typeof v === "string";
 
+// บัตรจากคลังกลาง: เก็บเฉพาะความคืบหน้า (id = wordKey) · บัตรเดิม (เพิ่มเอง) มี en/th/example ครบ
+const libraryCardOk = (d) => str(d.wordKey) && d.id === d.wordKey && ["learning", "known"].includes(d.status)
+  && Number.isInteger(d.level) && Number.isInteger(d.rank) && (d.note === undefined || (typeof d.note === "string" && d.note.length <= 5000));
+const legacyCardOk = (d) => str(d.en) && str(d.th) && str(d.example) && (d.ipa === undefined || str(d.ipa)) && (d.tags === undefined || (Array.isArray(d.tags) && d.tags.every(str)));
 const CHECK = {
   settings: (d) => d.id === "main"
     && (d.stage === undefined || (Number.isInteger(d.stage) && d.stage >= 0 && d.stage <= 5))
@@ -26,9 +30,8 @@ const CHECK = {
     && (d.handwritingStyle === undefined || STYLES.includes(d.handwritingStyle))
     && (d.focus === undefined || (d.focus !== null && typeof d.focus === "object" && !Array.isArray(d.focus)))
     && (d.criteria === undefined || (d.criteria !== null && typeof d.criteria === "object" && !Array.isArray(d.criteria))),
-  cards: (d) => str(d.en) && str(d.th) && str(d.example) && (d.ipa === undefined || str(d.ipa)) && (d.tags === undefined || (Array.isArray(d.tags) && d.tags.every(str))),
+  cards: (d) => (d.source === "library" ? libraryCardOk(d) : legacyCardOk(d)),
   errors: (d) => str(d.wrong) && str(d.right) && CATEGORIES.includes(d.category) && (d.note === undefined || str(d.note)),
-  lexicon: (d) => str(d.word) && d.id === wordKey(d.word) && Array.isArray(d.th) && (d.userEdited === undefined || typeof d.userEdited === "boolean"),
   smartFolders: (d) => str(d.name) && d.name.length <= 100 && d.conditions !== null && typeof d.conditions === "object" && !Array.isArray(d.conditions),
   reviews: (d) => str(d.cardId) && Number.isInteger(d.rating) && d.rating >= 0 && d.rating <= 3 && num(d.at),
   sessions: (d) => num(d.start) && num(d.end) && num(d.durationSec) && SESSION_SKILLS.includes(d.skill),

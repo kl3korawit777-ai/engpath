@@ -3,9 +3,9 @@ import * as db from "../db.js";
 import * as srs from "../srs.js";
 import * as lib from "../library.js";
 import * as lk from "../links.js";
-import { wordKey, thDisplay } from "../lexicon.js";
+import { vocab, wordKey } from "../vocab.js";
 import { LEVEL_LABELS, MEMORY_LABELS, POS_LABELS } from "../data/lexicon-config.js";
-import { setAddWordPrefill } from "../scope.js";
+import { setWordStatus } from "./newwords.js";
 import * as gr from "../graph.js";
 import * as gui from "../graphui.js";
 import { h } from "../dom.js";
@@ -20,11 +20,13 @@ export function render(root, { toast, param }) {
     return;
   }
 
-  const cardOf = () => db.list("cards").find((c) => wordKey(c.en) === key) || null;
+  const entry = vocab.peek(key);          // ข้อมูลคำจากคลังกลาง (โหลดไว้แล้วตอนเปิดแอป) — null ถ้าไม่ใช่คำในคลัง
+  const cardOf = () => db.list("cards").find((c) => c.wordKey === key || wordKey(c.en) === key) || null;
   const cardKeys = () => db.list("cards").map((c) => wordKey(c.en));
-  const exists = (k) => cardKeys().includes(k);
+  // ลิงก์ [[ ]] ไปได้ทุกคำในคลังกลาง (ไม่ต้องเรียนแล้ว) และบัตรเดิมที่ผู้ใช้เพิ่มเอง
+  const linkable = () => [...new Set([...vocab.keys(), ...cardKeys()])];
+  const exists = (k) => Boolean(vocab.peek(k)) || cardKeys().includes(k);
   let saveTimer = null;
-  let lex = null;                      // ข้อมูลจากคลังคำ (cache เท่านั้น ไม่เรียก API ที่หน้านี้)
   let sugg = [], pick = 0, open = null;
 
   const head = h("div", { class: "stack" });
@@ -62,13 +64,13 @@ export function render(root, { toast, param }) {
   function refreshPop() {
     open = lk.openLink(ta.value, ta.selectionStart);
     if (!open) { closePop(); return; }
-    sugg = lk.suggest(open.query, cardKeys().filter((k) => k !== key));
+    sugg = lk.suggest(open.query, linkable().filter((k) => k !== key));
     pick = Math.min(pick, Math.max(0, sugg.length - 1));
     pop.hidden = false;
     pop.replaceChildren(...(sugg.length
       ? sugg.map((k, i) => h("li", { role: "option", id: `sg-${i}`, class: `suggest__item ${i === pick ? "is-on" : ""}`, "aria-selected": String(i === pick), text: k,
           onmousedown: (e) => { e.preventDefault(); choose(k); } }))
-      : [h("li", { class: "suggest__empty muted", text: open.query ? "ไม่พบในคลัง — พิมพ์ต่อได้ ลิงก์จะเป็นสีจางและกดเพิ่มคำได้ภายหลัง" : "ยังไม่มีบัตรคำอื่นให้ลิงก์" })]));
+      : [h("li", { class: "suggest__empty muted", text: open.query ? "ไม่พบในคลังกลาง — พิมพ์ต่อได้ แต่ลิงก์จะเป็นสีจางเพราะเพิ่มคำนอกคลังไม่ได้" : "พิมพ์ชื่อคำเพื่อค้นหาในคลังกลาง" })]));
     if (sugg.length) ta.setAttribute("aria-activedescendant", `sg-${pick}`);
   }
   function choose(k) {
@@ -95,8 +97,8 @@ export function render(root, { toast, param }) {
   // ---------- แสดงลิงก์ ----------
   function linkNode(s) {
     if (s.exists) return h("a", { class: "wlink", href: wordHref(s.key), title: s.key, text: s.label });
-    return h("button", { class: "wlink wlink--missing", type: "button", title: `“${s.key}” ยังไม่มีในคลัง — กดเพื่อเพิ่ม`, text: s.label,
-      onclick: () => { flush(); setAddWordPrefill({ word: s.key }); location.hash = "#/cards"; } });
+    return h("button", { class: "wlink wlink--missing", type: "button", title: `“${s.key}” ไม่อยู่ในคลังกลาง (เพิ่มคำนอกคลังไม่ได้)`, text: s.label,
+      onclick: () => toast?.(`“${s.key}” ไม่อยู่ในคลังกลาง จึงเปิดหน้าคำไม่ได้`) });
   }
   const renderText = (text) => lk.segments(text, exists).map((s) => (s.type === "text" ? document.createTextNode(s.text) : linkNode(s)));
 
@@ -123,29 +125,38 @@ export function render(root, { toast, param }) {
         out.length ? h("div", { class: "row" }, ...out.map((k) => linkNode({ key: k, label: k, exists: exists(k) }))) : h("p", { class: "muted", text: "โน้ตนี้ยังไม่ลิงก์ไปคำอื่น" })));
   }
 
-  // ---------- ข้อมูลคำ ----------
+  // ---------- ข้อมูลคำ (อ่านจากคลังกลางทั้งหมด) ----------
   function drawInfo() {
     const c = cardOf();
+    const w = entry;
     head.replaceChildren(
       h("div", { class: "row" }, h("a", { class: "btn btn--secondary btn--chip", href: "#/library", text: "← คลังคำ" })),
-      h("div", { class: "page-head" }, h("h1", { text: c?.en || key }), c ? h("p", { text: c.th }) : null));
-    if (!c) {
-      info.replaceChildren(h("div", { class: "notice" }, "คำนี้ยังไม่มีบัตรคำในคลัง — เขียนโน้ตไว้ก่อนได้ หรือ ",
-        h("button", { class: "btn btn--chip", type: "button", text: "เพิ่มเป็นบัตรคำ", onclick: () => { flush(); setAddWordPrefill({ word: key }); location.hash = "#/cards"; } })));
+      h("div", { class: "page-head" }, h("h1", { text: w?.word || c?.en || key }), ...(w ? [h("p", { text: w.th.map((t) => t.text).join(" / ") })] : c ? [h("p", { text: c.th })] : [])));
+    if (!w && !c) {
+      info.replaceChildren(h("div", { class: "notice" }, "คำนี้ไม่อยู่ในคลังกลาง — เขียนโน้ตไว้ได้ แต่เพิ่มคำนอกคลังไม่ได้"));
       return;
     }
-    const st = srs.stateMap([c], db.list("reviews")).get(c.id);
-    const meanings = (lex?.meanings || []).slice(0, 3);
-    info.replaceChildren(
+    const st = c ? srs.stateMap([c], db.list("reviews")).get(c.id) : null;
+    const learn = !c && w ? h("div", { class: "row" },
+      h("button", { class: "btn", type: "button", text: "เริ่มเรียนคำนี้", onclick: () => { flush(); setWordStatus(w, "learning"); toast?.(`เพิ่ม “${w.word}” เข้าการเรียนแล้ว`); } }),
+      db.skippedKeys().has(key) ? h("small", { class: "muted", text: "เคยกด “รู้แล้ว” ไว้ — กดเริ่มเรียนเพื่อนำกลับมา" }) : null) : null;
+    const list = (label, words) => (words?.length ? h("div", {}, h("strong", { text: `${label}: ` }), words.map((x) => x).join(", ")) : null);
+    info.replaceChildren(...[
       h("div", { class: "row tags" },
-        c.ipa || lex?.ipa ? h("span", { class: "mono", text: c.ipa || lex.ipa }) : null,
-        c.pos ? h("span", { class: "badge", text: POS_LABELS[c.pos] ?? c.pos }) : null,
-        h("span", { class: "badge", text: LEVEL_LABELS[lib.levelOf(c.freq)] }),
-        h("span", { class: "badge", text: MEMORY_LABELS[lib.memoryStatus(st)] }),
-        ...lib.cardTags(c).map((t) => h("span", { class: "badge", text: t }))),
-      c.example ? h("p", {}, h("em", { text: c.example })) : null,
-      meanings.length ? h("ul", { class: "list" }, ...meanings.map((m) => h("li", { class: "muted", text: `${m.pos ? `(${m.pos}) ` : ""}${m.definition || ""}` }))) : null,
-      lex?.th?.length && !c.th ? h("p", { text: thDisplay(lex.th) }) : null);
+        w?.ipa ? h("span", { class: "mono", text: w.ipa }) : null,
+        ...(w?.pos || []).map((p) => h("span", { class: "badge", text: POS_LABELS[p] ?? p })),
+        w ? h("span", { class: "badge", text: w.cefr }) : null,
+        w ? h("span", { class: "badge", text: `ระดับ ${w.level}` }) : h("span", { class: "badge", text: LEVEL_LABELS[lib.cardLevel(c)] }),
+        st ? h("span", { class: "badge", text: MEMORY_LABELS[lib.memoryStatus(st)] }) : null,
+        ...(w?.tags || lib.cardTags(c)).map((t) => h("span", { class: "badge", text: t }))),
+      learn,
+      w ? h("ul", { class: "plain-list" }, ...w.th.map((t) => h("li", {}, h("span", { class: "mono muted", text: `(${t.pos}) `.replace("()", "") }), t.text))) : null,
+      w?.examples?.length ? h("ul", { class: "plain-list" }, ...w.examples.map((e) => h("li", {}, h("em", { text: e.text })))) : c?.example ? h("p", {}, h("em", { text: c.example })) : null,
+      w?.collocations?.length ? list("วลีที่ใช้บ่อย", w.collocations) : null,
+      w?.defEn?.length ? h("details", { class: "lex-details" }, h("summary", { text: "ความหมายภาษาอังกฤษ" }), h("ul", { class: "plain-list" }, ...w.defEn.map((d) => h("li", { text: `(${d.pos}) ${d.def}` })))) : null,
+      w && (w.synonyms?.length || w.antonyms?.length || w.family?.length) ? h("details", { class: "lex-details" }, h("summary", { text: "คำที่เกี่ยวข้อง" }), list("พ้องความหมาย", w.synonyms), list("ตรงข้าม", w.antonyms), list("ตระกูลคำ", w.family)) : null,
+      w ? h("small", { class: "muted", text: "ข้อมูลจากคลังกลาง (CC BY-SA 4.0) — ดูเครดิตที่หน้า “ตั้งค่า”" }) : null,
+    ].filter(Boolean));
   }
 
   // ---------- กราฟรอบคำนี้ (สร้างเมื่อเปิดเท่านั้น) ----------
@@ -185,7 +196,6 @@ export function render(root, { toast, param }) {
     if (document.activeElement !== ta && cur && cur.notes !== ta.value) { ta.value = cur.notes; }   // แก้จากอีกเครื่อง/แท็บ (ขณะไม่ได้พิมพ์)
     redraw();
   });
-  db.lexiconGet(key).then((r) => { lex = r.doc; drawInfo(); }).catch(() => {});
   redraw();
 
   return () => { unsub(); flush(); clearTimeout(saveTimer); clearTimeout(localTimer); lv?.destroy(); };

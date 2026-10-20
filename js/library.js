@@ -1,5 +1,5 @@
 // ตรรกะคลังคำศัพท์แบบ pure: แท็กซ้อนชั้น, ระดับ, สถานะการจำ, ตัวกรอง (ใช้ซ้ำกับ Smart folder)
-import { LEVEL_THRESHOLDS, KNOWN_INTERVAL_DAYS } from "./data/lexicon-config.js";
+import { LEVEL_THRESHOLDS, KNOWN_INTERVAL_DAYS, LIBRARY_LEVEL_BANDS } from "./data/lexicon-config.js";
 import { isDue, DAY } from "./srs.js";
 
 // ---------- แท็ก ----------
@@ -95,6 +95,12 @@ export function wrongCounts(reviews) {
  *   dueOnly      เฉพาะที่ถึงรอบทบทวน
  * ctx: { states: Map(cardId → srs state), wrong: Map(cardId → n), now }
  */
+/** ระดับของบัตร: บัตรจากคลังกลางใช้ level 1–11 จัดกลุ่ม, บัตรเดิมใช้ความถี่ (freq) */
+export function cardLevel(card, bands = LIBRARY_LEVEL_BANDS) {
+  if (card?.source === "library" && Number.isInteger(card.level)) return card.level <= bands.basic ? "basic" : card.level <= bands.medium ? "medium" : "academic";
+  return levelOf(card?.freq);
+}
+
 export function filterCards(cards, criteria, ctx) {
   const c = criteria || {};
   const q = (c.q || "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -103,7 +109,7 @@ export function filterCards(cards, criteria, ctx) {
     if (q && ![card.en, card.th, card.example, ...(card.tags || [])].join(" ").toLowerCase().includes(q)) return false;
     if (c.tags?.length && !c.tags.every((t) => tagMatches(card, t))) return false;
     if (c.pos?.length && !c.pos.includes(card.pos || "")) return false;
-    if (c.levels?.length && !c.levels.includes(levelOf(card.freq))) return false;
+    if (c.levels?.length && !c.levels.includes(cardLevel(card))) return false;
     if (c.sources?.length && !c.sources.includes(card.source || "manual")) return false;
     if (c.memory?.length && !c.memory.includes(memoryStatus(state))) return false;
     if (c.wrongMin != null && (ctx.wrong.get(card.id) || 0) < c.wrongMin) return false;

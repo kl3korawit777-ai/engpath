@@ -10,6 +10,9 @@ export const KNOWN_INTERVAL_DAYS = 21;
 
 export const MEMORY_LABELS = { new: "ใหม่", learning: "กำลังเรียน", known: "จำได้" };
 
-export const SOURCE_LABELS = { manual: "เพิ่มเอง", errorlog: "Error Log", shadowing: "Shadowing", reading: "ตัวเช็ก i+1" };
+// ระดับของคลังกลาง (1–11) จัดกลุ่มเป็น พื้นฐาน/กลาง/วิชาการ สำหรับตัวกรองและ Smart folder เดิม: ระดับ ≤ basic = พื้นฐาน, ≤ medium = กลาง, ที่เหลือ = วิชาการ
+export const LIBRARY_LEVEL_BANDS = { basic: 3, medium: 7 };
+
+export const SOURCE_LABELS = { library: "คลังกลาง", manual: "เพิ่มเอง", errorlog: "Error Log", shadowing: "Shadowing", reading: "ตัวเช็ก i+1" };
 
 export const POS_LABELS = { "": "ไม่ระบุ", noun: "noun", verb: "verb", adjective: "adjective", adverb: "adverb", phrase: "phrase", other: "other" };

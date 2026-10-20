@@ -8,6 +8,7 @@ import * as practice from "../practice.js";
 import * as ts from "../techscore.js";
 import { setErrorsTab } from "../scope.js";
 import { h } from "../dom.js";
+import { mount as mountNewWords } from "./newwords.js";
 
 // ลิงก์ "ไปที่" ของแต่ละช่วงเวลา (เฉพาะช่วงที่มีหน้าฝึกรองรับ)
 const SEG_LINKS = {
@@ -68,6 +69,7 @@ export function render(root) {
   const focusEl = h("div");
   const cpEl = h("div");
   const challengeEl = h("div");
+  const newWordsEl = h("div");
   const streakEl = h("div", { class: "big-num" });
   const heatEl = h("div");
   const body = h("div");
@@ -113,7 +115,7 @@ export function render(root) {
 
     const label = T.done ? "จบแล้ว" : timer.SEGMENTS[T.idx].label;
     body.replaceChildren(
-      cpEl, challengeEl,
+      cpEl, challengeEl, newWordsEl,
       h("section", { class: "card stack" }, h("h2", { text: "ขั้นปัจจุบัน" }), stageRow),
       h("section", { class: "card stack timer", style: T.done ? "" : `--c:${timer.SEGMENTS[T.idx].color}` },
         h("div", { class: "row" }, h("h2", { text: label }), h("span", { class: "badge", text: `ขั้น ${stage}` })),
@@ -192,5 +194,6 @@ export function render(root) {
     drawAll();
   });
   drawAll();
-  return () => { listeners.delete(onTimer); unsub(); };
+  const offNew = mountNewWords(newWordsEl, { toast });
+  return () => { listeners.delete(onTimer); unsub(); offNew(); };
 }

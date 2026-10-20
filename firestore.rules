@@ -6,23 +6,30 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
 
+    // ข้อมูลส่วนตัวของผู้ใช้แต่ละคน: ทุก collection อยู่ใต้ users/{uid}/ และเข้าถึงได้เฉพาะเจ้าของ (ผู้ใช้คนอื่นอ่าน/เขียนไม่ได้)
+    // คลังคำศัพท์กลาง (5,050 คำ) เป็นไฟล์ static ใน /vocab ไม่ได้อยู่ใน Firestore จึงไม่มี collection lexicon อีกแล้ว
     match /users/{userId}/{col}/{docId} {
       // อ่านได้เฉพาะเจ้าของ
       allow read: if isOwner(userId);
 
       // สร้างได้เฉพาะ collection ที่แอปใช้ และ id ต้องตรงกับชื่อ document
       allow create: if isOwner(userId)
-        && col in ['settings', 'cards', 'errors', 'lexicon', 'smartFolders', 'clips', 'playlists', 'handwritingWords', 'journal', 'links', 'wordFamilies', 'dailyStats', 'questions', 'examSets',
+        && col in ['settings', 'cards', 'errors', 'smartFolders', 'clips', 'playlists', 'handwritingWords', 'journal', 'links', 'wordFamilies', 'dailyStats', 'questions', 'examSets',
                  'reviews', 'sessions', 'errorEvents', 'checkpoints', 'practiceEvents', 'shadowingEvents', 'handwritingAttempts', 'handwritingImages', 'readings', 'interleavingSessions', 'examAttempts']
         && request.resource.data.id == docId;
 
       // แก้ไขได้เฉพาะข้อมูลที่ไม่ใช่ events (events ต่อท้ายอย่างเดียว)
       allow update: if isOwner(userId)
-        && col in ['settings', 'cards', 'errors', 'lexicon', 'smartFolders', 'clips', 'playlists', 'handwritingWords', 'journal', 'links', 'wordFamilies', 'dailyStats', 'questions', 'examSets']
+        && col in ['settings', 'cards', 'errors', 'smartFolders', 'clips', 'playlists', 'handwritingWords', 'journal', 'links', 'wordFamilies', 'dailyStats', 'questions', 'examSets']
         && request.resource.data.id == docId;
 
       // ห้ามลบจริง ใช้ soft delete (deleted: true) แทน
       allow delete: if false;
+    }
+
+    // อย่างอื่นทั้งหมดปิด (ไม่มี collection ที่ใช้ร่วมกันระหว่างผู้ใช้)
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

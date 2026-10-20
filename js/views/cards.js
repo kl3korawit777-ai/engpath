@@ -1,7 +1,7 @@
 import * as db from "../db.js";
 import * as srs from "../srs.js";
 import { h } from "../dom.js";
-import { mount as mountAddWord } from "./addword.js";
+import { findInLibrary } from "../wordnav.js";
 import * as lib from "../library.js";
 import { takeReviewScope, takeAddWordPrefill } from "../scope.js";
 
@@ -34,6 +34,11 @@ function highlight(example, phrase) {
 const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
 export function render(root, { toast }) {
+  // หน้าอื่น (Shadowing, Journal, สอบ, กราฟ ฯลฯ) เคยส่งคำมาเพิ่มบัตรที่นี่ — ตอนนี้ผู้ใช้เพิ่มคำเองไม่ได้ จึงพาไปหน้าคำในคลังกลาง (เริ่มเรียนได้ที่นั่น)
+  const incoming = takeAddWordPrefill();
+  const hit = incoming && findInLibrary(incoming.word || "");
+  if (hit) { location.hash = `#/word/${encodeURIComponent(hit.wordKey)}`; return; }
+  if (incoming) toast(`“${incoming.word}” ไม่อยู่ในคลังกลาง (เพิ่มคำนอกคลังไม่ได้)`);
   let tab = "review";        // review | list
   let editing = null;        // null | "new" | card
   let query = "";
@@ -41,9 +46,6 @@ export function render(root, { toast }) {
   let session = null;
   let scope = takeReviewScope();     // มาจากปุ่ม ▶ ของ Smart folder ในหน้าคลัง (ถ้ามี)
   if (scope) tab = "review";
-  let addCleanup = null;
-  let addPrefill = takeAddWordPrefill();     // มาจากบท Shadowing (ถ้ามี)
-  if (addPrefill) tab = "add";
 
   const body = h("div");
   const tabBtn = (key, label) => h("button", {
@@ -52,14 +54,12 @@ export function render(root, { toast }) {
   });
 
   function draw() {
-    if (addCleanup) { addCleanup(); addCleanup = null; }
     root.replaceChildren(
       h("div", { class: "page-head" }, h("h1", { text: "บัตรคำ" }), h("p", { class: "muted", text: "ทบทวนด้วย Spaced Repetition (SM-2)" })),
-      h("div", { class: "row tabs" }, tabBtn("review", "ทบทวน"), tabBtn("list", "รายการ"), tabBtn("add", "เพิ่มคำ")),
+      h("div", { class: "row tabs" }, tabBtn("review", "ทบทวน"), tabBtn("list", "รายการ"), h("a", { class: "btn btn--secondary", href: "#/today", text: "เรียนคำใหม่" })),
       body
     );
     if (tab === "review") (session ? drawSession() : drawMenu());
-    else if (tab === "add") { const pre = addPrefill; addPrefill = null; addCleanup = mountAddWord(body, { toast, prefill: pre, onSaved: () => { tab = "list"; draw(); } }); }
     else drawList();
   }
 
@@ -76,10 +76,10 @@ export function render(root, { toast }) {
       const f = qq ? cards.filter((c) => srs.normalize([c.en, c.th, c.example, ...(c.tags || [])].join(" ")).includes(qq)) : cards;
       count.textContent = `${f.length} / ${cards.length} ใบ`;
       rows.replaceChildren(...f.map(cardRow));
-      if (!f.length) rows.replaceChildren(h("li", { class: "muted", text: cards.length ? "ไม่พบบัตรที่ตรงกับคำค้น" : "ยังไม่มีบัตรคำ กด “เพิ่มบัตรคำ” เพื่อเริ่ม" }));
+      if (!f.length) rows.replaceChildren(h("li", { class: "muted", text: cards.length ? "ไม่พบบัตรที่ตรงกับคำค้น" : "ยังไม่มีบัตรคำ เริ่มเรียนคำใหม่ได้ที่หน้า “วันนี้”" }));
     }
     body.replaceChildren(
-      h("div", { class: "row" }, search, h("button", { class: "btn", type: "button", text: "+ เพิ่มบัตรคำ", onclick: () => { editing = "new"; drawList(); } })),
+      h("div", { class: "row" }, search),
       ...(editing ? [cardForm()] : []), count, rows
     );
     search.style.flex = "1";
@@ -87,6 +87,7 @@ export function render(root, { toast }) {
   }
 
   function cardRow(c) {
+    const isLib = c.source === "library";
     return h("li", { class: "card-row" },
       h("div", { class: "card-row__main" },
         h("div", {}, h("strong", { text: c.en }), c.ipa ? h("span", { class: "mono muted", text: `  ${c.ipa}` }) : null, h("span", { text: `  ${c.th}` })),
@@ -94,11 +95,11 @@ export function render(root, { toast }) {
         (c.tags || []).length ? h("div", { class: "row tags" }, ...c.tags.map((t) => h("span", { class: "badge", text: t }))) : null),
       h("div", { class: "row" },
         speakBtn(c.en),
-        h("button", { class: "btn btn--secondary", type: "button", text: "แก้ไข", onclick: () => { editing = c; drawList(); } }),
-        h("button", { class: "btn btn--secondary", type: "button", text: "ลบ", onclick: () => {
-          if (!confirm(`ลบบัตร “${c.en}” ?`)) return;
+        isLib ? h("a", { class: "btn btn--secondary", href: `#/word/${encodeURIComponent(c.wordKey)}`, text: "โน้ต" }) : h("button", { class: "btn btn--secondary", type: "button", text: "แก้ไข", onclick: () => { editing = c; drawList(); } }),
+        h("button", { class: "btn btn--secondary", type: "button", text: isLib ? "เอาออก" : "ลบ", onclick: () => {
+          if (!confirm(isLib ? `เอา “${c.en}” ออกจากการเรียน? (กลับมาเรียนได้ภายหลัง ประวัติทบทวนยังอยู่)` : `ลบบัตร “${c.en}” ?`)) return;
           db.softDelete("cards", c.id);
-          toast("ลบแล้ว");
+          toast(isLib ? "เอาออกแล้ว" : "ลบแล้ว");
         } })));
   }
 
@@ -301,5 +302,5 @@ export function render(root, { toast }) {
     else if (tab === "list" && !editing) drawList();
   });
   draw();
-  return () => { unsub(); if (addCleanup) addCleanup(); if (canSpeak) speechSynthesis.cancel(); };
+  return () => { unsub(); if (canSpeak) speechSynthesis.cancel(); };
 }

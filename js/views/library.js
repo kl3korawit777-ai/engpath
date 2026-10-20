@@ -72,7 +72,7 @@ export function render(root, { toast }) {
       } }) : null,
       foldersPanel(),
       chipGroup("ชนิดคำ", "pos", posValues.map((p) => [p, POS_LABELS[p] ?? p, count((c) => (c.pos || "") === p)])),
-      chipGroup("ระดับ (ตามความถี่)", "levels", levelValues.map((l) => [l, LEVEL_LABELS[l], count((c) => lib.levelOf(c.freq) === l)]).filter(([, , n]) => n || criteria.levels.length)),
+      chipGroup("ระดับ (ตามความถี่)", "levels", levelValues.map((l) => [l, LEVEL_LABELS[l], count((c) => lib.cardLevel(c) === l)]).filter(([, , n]) => n || criteria.levels.length)),
       chipGroup("แหล่งที่มา", "sources", sourceValues.map((s) => [s, SOURCE_LABELS[s] ?? s, count((c) => (c.source || "manual") === s)])),
       chipGroup("สถานะการจำ", "memory", ["new", "learning", "known"].map((m) => [m, MEMORY_LABELS[m], count((c) => lib.memoryStatus(ctx.states.get(c.id)) === m)])),
       extraPanel(),
@@ -198,13 +198,13 @@ export function render(root, { toast }) {
     const rows = result.slice(0, shown).map((c) => row(c));
     list.replaceChildren(...[
       h("p", { class: "muted mono", text: `${result.length} / ${ctx.cards.length} ใบ` }),
-      h("ul", { class: "list" }, rows.length ? rows : h("li", { class: "muted", text: ctx.cards.length ? "ไม่พบบัตรที่ตรงกับตัวกรอง" : "ยังไม่มีบัตรคำ ไปเพิ่มที่หน้า “บัตรคำ”" })),
+      h("ul", { class: "list" }, rows.length ? rows : h("li", { class: "muted", text: ctx.cards.length ? "ไม่พบบัตรที่ตรงกับตัวกรอง" : "ยังไม่มีบัตรคำ เริ่มเรียนคำใหม่ได้ที่หน้า “วันนี้”" })),
       result.length > shown ? h("button", { class: "btn btn--secondary", type: "button", text: `แสดงเพิ่ม (เหลือ ${result.length - shown})`, onclick: () => { shown += PAGE; drawList(); } }) : null].filter(Boolean));
   }
 
   function row(c) {
-    const lvl = lib.levelOf(c.freq);
-    const posSel = h("select", { class: "input select pos-select", "aria-label": `ชนิดคำของ ${c.en}`,
+    const lvl = lib.cardLevel(c);
+    const posSel = c.source === "library" ? h("span", { class: "badge", text: POS_LABELS[c.pos || ""] ?? c.pos }) : h("select", { class: "input select pos-select", "aria-label": `ชนิดคำของ ${c.en}`,
       onchange: (e) => db.update("cards", c.id, { pos: e.target.value || null }) },
       ...Object.entries(POS_LABELS).map(([v, l]) => h("option", { value: v, text: l, selected: v === (c.pos || "") })));
     return h("li", { class: "card-row" },

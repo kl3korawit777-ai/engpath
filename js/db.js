@@ -4,14 +4,16 @@
 // - เขียนแบบ fire-and-forget: Firestore ใช้ local cache ทันทีและส่งขึ้นเซิร์ฟเวอร์เมื่อออนไลน์
 
 import { buildExport, planImport } from "./backup.js";
+import { hydrateCard } from "./cardview.js";
+import { buildAliases, remapReview } from "./migrate.js";
 
 const SDK ="https://www.gstatic.com/firebasejs/10.14.1";
 
-export const MUTABLE_COLS = ["settings", "cards", "errors", "lexicon", "smartFolders", "clips", "playlists", "handwritingWords", "journal", "links", "wordFamilies", "dailyStats", "questions", "examSets"];
+export const MUTABLE_COLS = ["settings", "cards", "errors", "smartFolders", "clips", "playlists", "handwritingWords", "journal", "links", "wordFamilies", "dailyStats", "questions", "examSets"];
 export const EVENT_COLS = ["reviews", "sessions", "errorEvents", "checkpoints", "practiceEvents", "shadowingEvents", "handwritingAttempts", "handwritingImages", "readings", "interleavingSessions", "examAttempts"]; // ต่อท้ายอย่างเดียว
 const ALL_COLS = [...MUTABLE_COLS, ...EVENT_COLS];
-// collection ที่ไม่ผูก listener ทั้งชุด (ข้อมูลหนัก): lexicon (หลายพันคำ), handwritingImages (รูปละ ~25KB) — อ่านรายรายการผ่าน lazyGet()
-const LAZY_COLS = ["lexicon", "handwritingImages"];
+// collection ที่ไม่ผูก listener ทั้งชุด (ข้อมูลหนัก): handwritingImages (รูปละ ~25KB) — อ่านรายรายการผ่าน lazyGet()
+const LAZY_COLS = ["handwritingImages"];
 const LISTEN_COLS = ALL_COLS.filter((c) => !LAZY_COLS.includes(c));
 
 let F = null;            // { auth, db, A, S }
@@ -48,9 +50,27 @@ function notifyData() {
 }
 
 // ---------- อ่าน ----------
-export const list = (col) => [...raw[col].values()].filter((d) => !d.deleted);
+// บัตรจากคลังกลาง (มี wordKey) เก็บเฉพาะความคืบหน้า — ตอนอ่านจะเติม en/th/example/ipa/tags จากคลังให้
+// หน้าที่อ่าน c.en / c.th เดิมใช้ต่อได้ (คลังเป็น immutable และต้องโหลดก่อน: ดู vocab.loadAll() ใน app.js)
+// reviews ของบัตรเดิมที่ย้ายเข้าคลังแล้ว: แปลง cardId → id บัตรคลังตอนอ่าน (event ดิบใน Firestore ไม่ถูกแก้) ดู js/migrate.js
+let aliasCache = null;
+const aliasMap = () => (aliasCache ||= buildAliases(raw.cards.values()));
+const remapped = new WeakMap();
+function remapOne(d) {
+  const al = aliasMap();
+  if (!al.size || !al.has(d.cardId)) return d;
+  let r = remapped.get(d);
+  if (!r || r.cardId !== al.get(d.cardId)) { r = remapReview(d, al); remapped.set(d, r); }
+  return r;
+}
+const view = (col, d) => (col === "cards" ? hydrateCard(d) : col === "reviews" ? remapOne(d) : d);
+/** บัตรที่กด “รู้แล้ว” (status known) ไม่อยู่ในรายการ/รอบทบทวน — ใช้ skippedKeys() ดูว่าข้ามคำไหนไว้ */
+const visible = (col, d) => !d.deleted && !(col === "cards" && d.status === "known");
+export const list = (col) => [...raw[col].values()].filter((d) => visible(col, d)).map((d) => view(col, d));
+export const getRaw = (col, id) => raw[col].get(id) || null;
+export const skippedKeys = () => new Set([...raw.cards.values()].filter((d) => !d.deleted && d.status === "known" && d.wordKey).map((d) => d.wordKey));
 export const all = (col) => [...raw[col].values()];   // รวมที่ถูกลบ (ใช้ตอน export)
-export const get = (col, id) => raw[col].get(id) || null;
+export const get = (col, id) => { const d = raw[col].get(id); return d ? view(col, d) : null; };
 export const currentUser = () => user;
 export const isReady = () => firstSnap.size === LISTEN_COLS.length;
 
@@ -63,7 +83,7 @@ export function whenReady() {
 }
 
 // ค่า default ใช้ตอนอ่านเท่านั้น (ข้อมูลเฟสก่อนหน้าไม่ต้องย้าย): onboarding/criteria/focus ไม่มี = ยังไม่เคยตั้ง
-const SETTINGS_DEFAULTS = { stage: 0, dailyMinutes: 60, checkpointWeeks: 5, handwritingStyle: "print" };
+const SETTINGS_DEFAULTS = { stage: 0, dailyMinutes: 60, checkpointWeeks: 5, handwritingStyle: "print", newPerDay: 10, vocabLevels: [1], vocabTags: [] };
 export const getSettings = () => ({ ...SETTINGS_DEFAULTS, ...(raw.settings.get("main") || {}) });
 
 // ---------- เขียน ----------
@@ -113,7 +133,7 @@ export function saveSettings(patch) {
   return create("settings", { ...SETTINGS_DEFAULTS, ...patch, id: "main" });
 }
 
-// ---------- อ่านรายรายการ (lexicon, handwritingImages) ----------
+// ---------- อ่านรายรายการ (handwritingImages) ----------
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
 const docRef = (col, id) => F.S.doc(F.db, "users", uid, col, id);
 
@@ -136,21 +156,7 @@ export async function lazyGet(col, id) {
   }
 }
 
-export const lexiconGet = (key) => lazyGet("lexicon", key);
-/** อ่านจาก cache ในเครื่องเท่านั้น (ไม่แตะเซิร์ฟเวอร์ ไม่นับ read) — null ถ้าไม่มีใน cache */
-export async function lexiconCached(key) {
-  if (!F || !uid) return null;
-  try { const s = await F.S.getDocFromCache(docRef("lexicon", key)); return s.exists() ? s.data() : null; } catch { return null; }
-}
 export const imageGet = (attemptId) => lazyGet("handwritingImages", attemptId);
-
-/** เขียนคลังคำ (แทนที่ทั้งเอกสาร — ผู้เรียกรวมข้อมูลเดิมมาแล้ว) คืน doc ทันที */
-export function lexiconPut(key, fields, existing) {
-  const now = Date.now();
-  const doc = { ...fields, id: key, createdAt: existing?.createdAt ?? now, updatedAt: now, deleted: false };
-  write("lexicon", key, doc);
-  return doc;
-}
 
 async function loadAll(col) {
   const snap = await F.S.getDocs(F.S.collection(F.db, "users", uid, col));
@@ -194,6 +200,7 @@ function startWatching() {
           changed = true;
           if (ch.type === "removed") raw[col].delete(ch.doc.id);
           else raw[col].set(ch.doc.id, ch.doc.data());
+          if (col === "cards") aliasCache = null;
         }
         if (snap.metadata.hasPendingWrites) pending.add(col); else pending.delete(col);
         const first = !firstSnap.has(col);
@@ -212,6 +219,7 @@ function stopWatching() {
   unsubs.forEach((u) => u());
   unsubs = [];
   raw = Object.fromEntries(ALL_COLS.map((c) => [c, new Map()]));
+  aliasCache = null;
   pending.clear();
   firstSnap.clear();
   emitSync();

@@ -1,0 +1,464 @@
+{
+  "version": 1,
+  "batches": {
+    "001": {
+      "rankFrom": 1,
+      "rankTo": 100,
+      "count": 100,
+      "validatedAt": "2026-10-19T13:38:21.409Z",
+      "outputHash": "0bf9ec6a947bc41a",
+      "warnings": 7,
+      "claudeMain": 9
+    },
+    "002": {
+      "rankFrom": 101,
+      "rankTo": 200,
+      "count": 100,
+      "validatedAt": "2026-10-20T07:46:30.037Z",
+      "outputHash": "0ea5edae3f53890e",
+      "warnings": 28,
+      "claudeMain": 14
+    },
+    "003": {
+      "rankFrom": 201,
+      "rankTo": 300,
+      "count": 100,
+      "validatedAt": "2026-10-20T07:49:33.336Z",
+      "outputHash": "2b29ba97bee563fa",
+      "warnings": 23,
+      "claudeMain": 15
+    },
+    "004": {
+      "rankFrom": 301,
+      "rankTo": 400,
+      "count": 100,
+      "validatedAt": "2026-10-20T07:52:22.761Z",
+      "outputHash": "1fd4005a8ca364ca",
+      "warnings": 23,
+      "claudeMain": 18
+    },
+    "005": {
+      "rankFrom": 401,
+      "rankTo": 500,
+      "count": 100,
+      "validatedAt": "2026-10-20T07:54:37.476Z",
+      "outputHash": "4439ca48388bde1d",
+      "warnings": 17,
+      "claudeMain": 15
+    },
+    "006": {
+      "rankFrom": 501,
+      "rankTo": 600,
+      "count": 100,
+      "validatedAt": "2026-10-20T07:56:24.200Z",
+      "outputHash": "fa0280a8937a2cf9",
+      "warnings": 18,
+      "claudeMain": 23
+    },
+    "007": {
+      "rankFrom": 601,
+      "rankTo": 700,
+      "count": 100,
+      "validatedAt": "2026-10-20T07:57:55.684Z",
+      "outputHash": "902ab3c70db2df5d",
+      "warnings": 18,
+      "claudeMain": 25
+    },
+    "008": {
+      "rankFrom": 701,
+      "rankTo": 800,
+      "count": 100,
+      "validatedAt": "2026-10-20T07:59:23.034Z",
+      "outputHash": "23fab5964c7453e7",
+      "warnings": 19,
+      "claudeMain": 26
+    },
+    "009": {
+      "rankFrom": 801,
+      "rankTo": 900,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:01:05.941Z",
+      "outputHash": "29159081b320634c",
+      "warnings": 20,
+      "claudeMain": 27
+    },
+    "010": {
+      "rankFrom": 901,
+      "rankTo": 1000,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:02:30.333Z",
+      "outputHash": "5be42c4c68a05025",
+      "warnings": 18,
+      "claudeMain": 20
+    },
+    "011": {
+      "rankFrom": 1001,
+      "rankTo": 1100,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:03:53.741Z",
+      "outputHash": "7f2d7c40dc3e3dc0",
+      "warnings": 17,
+      "claudeMain": 22
+    },
+    "012": {
+      "rankFrom": 1101,
+      "rankTo": 1200,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:05:13.613Z",
+      "outputHash": "e29c4ed1a42724f8",
+      "warnings": 16,
+      "claudeMain": 30
+    },
+    "013": {
+      "rankFrom": 1201,
+      "rankTo": 1300,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:06:44.557Z",
+      "outputHash": "44e041a440332c60",
+      "warnings": 15,
+      "claudeMain": 21
+    },
+    "014": {
+      "rankFrom": 1301,
+      "rankTo": 1400,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:08:17.714Z",
+      "outputHash": "8c5f5ce633d1ff5f",
+      "warnings": 14,
+      "claudeMain": 26
+    },
+    "015": {
+      "rankFrom": 1401,
+      "rankTo": 1500,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:09:51.443Z",
+      "outputHash": "b4e7447c7a66be3c",
+      "warnings": 16,
+      "claudeMain": 32
+    },
+    "016": {
+      "rankFrom": 1501,
+      "rankTo": 1600,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:11:18.953Z",
+      "outputHash": "f863b3cd0b2dc145",
+      "warnings": 18,
+      "claudeMain": 40
+    },
+    "017": {
+      "rankFrom": 1601,
+      "rankTo": 1700,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:13:01.590Z",
+      "outputHash": "df9f710d07f34795",
+      "warnings": 22,
+      "claudeMain": 35
+    },
+    "018": {
+      "rankFrom": 1701,
+      "rankTo": 1800,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:14:25.821Z",
+      "outputHash": "863c21d3f028a90f",
+      "warnings": 11,
+      "claudeMain": 43
+    },
+    "019": {
+      "rankFrom": 1801,
+      "rankTo": 1900,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:17:32.311Z",
+      "outputHash": "fb6219935fe83fe1",
+      "warnings": 23,
+      "claudeMain": 36
+    },
+    "020": {
+      "rankFrom": 1901,
+      "rankTo": 2000,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:18:55.977Z",
+      "outputHash": "6c6492e059fc1a14",
+      "warnings": 14,
+      "claudeMain": 40
+    },
+    "021": {
+      "rankFrom": 2001,
+      "rankTo": 2100,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:20:22.949Z",
+      "outputHash": "b461e4eedafb91f0",
+      "warnings": 16,
+      "claudeMain": 40
+    },
+    "022": {
+      "rankFrom": 2101,
+      "rankTo": 2200,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:22:00.835Z",
+      "outputHash": "91ec769da246637a",
+      "warnings": 17,
+      "claudeMain": 49
+    },
+    "023": {
+      "rankFrom": 2201,
+      "rankTo": 2300,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:23:29.001Z",
+      "outputHash": "0909069f25c9a94b",
+      "warnings": 12,
+      "claudeMain": 37
+    },
+    "024": {
+      "rankFrom": 2301,
+      "rankTo": 2400,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:26:11.319Z",
+      "outputHash": "964d03c754006155",
+      "warnings": 11,
+      "claudeMain": 33
+    },
+    "025": {
+      "rankFrom": 2401,
+      "rankTo": 2500,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:27:41.412Z",
+      "outputHash": "b52e2b3646f184ee",
+      "warnings": 16,
+      "claudeMain": 41
+    },
+    "026": {
+      "rankFrom": 2501,
+      "rankTo": 2600,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:29:08.191Z",
+      "outputHash": "63d388eca0e35240",
+      "warnings": 10,
+      "claudeMain": 48
+    },
+    "027": {
+      "rankFrom": 2601,
+      "rankTo": 2700,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:30:27.991Z",
+      "outputHash": "10349e672395c05c",
+      "warnings": 11,
+      "claudeMain": 41
+    },
+    "028": {
+      "rankFrom": 2701,
+      "rankTo": 2800,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:32:07.734Z",
+      "outputHash": "58966940321f43be",
+      "warnings": 17,
+      "claudeMain": 37
+    },
+    "029": {
+      "rankFrom": 2801,
+      "rankTo": 2900,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:34:24.901Z",
+      "outputHash": "bb339b21a1b71ff8",
+      "warnings": 13,
+      "claudeMain": 46
+    },
+    "030": {
+      "rankFrom": 2901,
+      "rankTo": 3000,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:36:08.179Z",
+      "outputHash": "bf0784db328de61b",
+      "warnings": 18,
+      "claudeMain": 49
+    },
+    "031": {
+      "rankFrom": 3001,
+      "rankTo": 3100,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:37:45.820Z",
+      "outputHash": "0cc5c5887fa1071f",
+      "warnings": 15,
+      "claudeMain": 42
+    },
+    "032": {
+      "rankFrom": 3101,
+      "rankTo": 3200,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:39:23.361Z",
+      "outputHash": "0ac1ca2a4bb1a17e",
+      "warnings": 13,
+      "claudeMain": 54
+    },
+    "033": {
+      "rankFrom": 3201,
+      "rankTo": 3300,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:40:50.449Z",
+      "outputHash": "c9eed5c7dc609ef9",
+      "warnings": 23,
+      "claudeMain": 44
+    },
+    "034": {
+      "rankFrom": 3301,
+      "rankTo": 3400,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:42:47.168Z",
+      "outputHash": "f7555876ecd392d8",
+      "warnings": 20,
+      "claudeMain": 48
+    },
+    "035": {
+      "rankFrom": 3401,
+      "rankTo": 3500,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:44:11.200Z",
+      "outputHash": "fd5cc95723c3f0d1",
+      "warnings": 15,
+      "claudeMain": 47
+    },
+    "036": {
+      "rankFrom": 3501,
+      "rankTo": 3600,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:45:46.440Z",
+      "outputHash": "bfb055df0d8bfb1c",
+      "warnings": 12,
+      "claudeMain": 45
+    },
+    "037": {
+      "rankFrom": 3601,
+      "rankTo": 3700,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:47:12.188Z",
+      "outputHash": "2a4e8a0c05515494",
+      "warnings": 9,
+      "claudeMain": 56
+    },
+    "038": {
+      "rankFrom": 3701,
+      "rankTo": 3800,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:48:44.328Z",
+      "outputHash": "c0aa29256c016142",
+      "warnings": 10,
+      "claudeMain": 51
+    },
+    "039": {
+      "rankFrom": 3801,
+      "rankTo": 3900,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:51:43.373Z",
+      "outputHash": "c7d45b15a76b1aab",
+      "warnings": 44,
+      "claudeMain": 50
+    },
+    "040": {
+      "rankFrom": 3901,
+      "rankTo": 4000,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:53:18.207Z",
+      "outputHash": "856acf794df065a7",
+      "warnings": 42,
+      "claudeMain": 48
+    },
+    "041": {
+      "rankFrom": 4001,
+      "rankTo": 4100,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:55:12.955Z",
+      "outputHash": "3f90ced6c34f9c91",
+      "warnings": 33,
+      "claudeMain": 51
+    },
+    "042": {
+      "rankFrom": 4101,
+      "rankTo": 4200,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:56:51.256Z",
+      "outputHash": "fa85683db8fe44d2",
+      "warnings": 35,
+      "claudeMain": 57
+    },
+    "043": {
+      "rankFrom": 4201,
+      "rankTo": 4300,
+      "count": 100,
+      "validatedAt": "2026-10-20T08:58:29.997Z",
+      "outputHash": "df910e5864c9b427",
+      "warnings": 25,
+      "claudeMain": 64
+    },
+    "044": {
+      "rankFrom": 4301,
+      "rankTo": 4400,
+      "count": 100,
+      "validatedAt": "2026-10-20T09:00:37.722Z",
+      "outputHash": "51d16e3ed6abf74b",
+      "warnings": 28,
+      "claudeMain": 64
+    },
+    "045": {
+      "rankFrom": 4401,
+      "rankTo": 4500,
+      "count": 100,
+      "validatedAt": "2026-10-20T09:02:19.368Z",
+      "outputHash": "f86e6b38a3834c03",
+      "warnings": 34,
+      "claudeMain": 55
+    },
+    "046": {
+      "rankFrom": 4501,
+      "rankTo": 4600,
+      "count": 100,
+      "validatedAt": "2026-10-20T09:03:50.638Z",
+      "outputHash": "7f7f3332a09ecd2a",
+      "warnings": 34,
+      "claudeMain": 59
+    },
+    "047": {
+      "rankFrom": 4601,
+      "rankTo": 4700,
+      "count": 100,
+      "validatedAt": "2026-10-20T09:05:32.317Z",
+      "outputHash": "0f8a279527ae9b01",
+      "warnings": 44,
+      "claudeMain": 42
+    },
+    "048": {
+      "rankFrom": 4701,
+      "rankTo": 4800,
+      "count": 100,
+      "validatedAt": "2026-10-20T09:07:01.456Z",
+      "outputHash": "3e11ca8fa1c76be3",
+      "warnings": 35,
+      "claudeMain": 59
+    },
+    "049": {
+      "rankFrom": 4801,
+      "rankTo": 4900,
+      "count": 100,
+      "validatedAt": "2026-10-20T09:08:56.143Z",
+      "outputHash": "74a51f203f42e970",
+      "warnings": 36,
+      "claudeMain": 60
+    },
+    "050": {
+      "rankFrom": 4901,
+      "rankTo": 5000,
+      "count": 100,
+      "validatedAt": "2026-10-20T09:10:35.314Z",
+      "outputHash": "0abf9dfda975373d",
+      "warnings": 34,
+      "claudeMain": 53
+    },
+    "051": {
+      "rankFrom": 5001,
+      "rankTo": 5050,
+      "count": 50,
+      "validatedAt": "2026-10-20T09:11:31.485Z",
+      "outputHash": "ce0e414cb5a247f9",
+      "warnings": 16,
+      "claudeMain": 31
+    }
+  }
+}

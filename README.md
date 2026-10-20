@@ -4,7 +4,8 @@
 ใช้ Firebase (Google sign-in + Firestore) ซิงก์ข้อมูลข้ามเครื่อง และเป็น PWA ใช้ออฟไลน์ได้
 
 **เฟส 1:** ล็อกอิน + ซิงก์, หน้าวันนี้ (ตัวจับเวลา 4 ช่วง, Streak, heatmap), บัตรคำ SRS (SM-2), Error Log, Export/Import JSON
-**เฟส 2:** เพิ่มคำผ่าน API + คลังคำแปลถาวร, คลังคำศัพท์ + แท็กซ้อนชั้น + Smart folder, Onboarding + Roadmap ขั้น 0–5 + checkpoint, ฝึกเจาะจุดจาก Error Log, เทคนิคการเรียน 8 ข้อ
+**v1.1.0 — คลังคำศัพท์กลาง:** 5,050 คำ (NGSL-GR 1.0, CC BY-SA 4.0) แทนการเพิ่มคำเองผ่าน API — ดูหัวข้อ “คลังคำศัพท์กลาง” ท้ายไฟล์นี้
+**เฟส 2 (เดิม):** เพิ่มคำผ่าน API + คลังคำแปลถาวร, คลังคำศัพท์ + แท็กซ้อนชั้น + Smart folder, Onboarding + Roadmap ขั้น 0–5 + checkpoint, ฝึกเจาะจุดจาก Error Log, เทคนิคการเรียน 8 ข้อ
 
 ---
 
@@ -52,7 +53,7 @@ git branch -M main
 git remote add origin https://github.com/<username>/engpath.git
 git push -u origin main
 ```
-**Settings → Pages → Source: Deploy from a branch → `main` / `(root)`** → รอสักครู่ จะได้ `https://<username>.github.io/engpath/`
+**Settings → Pages → Source: GitHub Actions** (ใช้ [`.github/workflows/pages.yml`](.github/workflows/pages.yml) ที่เผยแพร่เฉพาะไฟล์ของแอป — **ไม่รวม `tools/`, `tests/`, `docs/`**) → push ขึ้น `main` แล้วรอ Actions เสร็จ จะได้ `https://<username>.github.io/engpath/`
 
 ทุกครั้งที่แก้ไฟล์ใน app shell ให้เปลี่ยน `VERSION` ใน `sw.js` (เช่น `v1` → `v2`) เพื่อให้เครื่องผู้ใช้ดึงชุดใหม่
 
@@ -264,3 +265,18 @@ npm test      # หรือ node --test tests/*.test.mjs   (srs, timer, streak,
 
 ทุก doc มี `id, createdAt, updatedAt, deleted` — ตัวเลขสรุป (สถานะ SRS, จำนวนครั้งที่ผิด, Streak, นาทีรวม, ระดับจากความถี่, สถานะการจำ, ครบรอบ checkpoint) **คำนวณจาก events เสมอ** ไม่เก็บเป็นตัวนับ
 ไอคอนใน `icons/` เป็น placeholder — เปลี่ยนเป็นของคุณเองได้ (ขนาดเดิม 192, 512, 180)
+
+---
+
+## คลังคำศัพท์กลาง (v1.1.0)
+
+- ข้อมูลอยู่ใน `/vocab` (`index.json` + `level-01..11.json`) เป็นไฟล์ static อ่านอย่างเดียว โหลดตามระดับและ cache ด้วย service worker — สร้างด้วย `tools/build-vocab` (Node.js รันในเครื่องผู้ดูแลเท่านั้น ไม่ deploy)
+- Firestore เก็บเฉพาะความคืบหน้า: บัตรใน `cards` มี `id = wordKey` + `status` (learning/known) + `level`/`rank`; โน้ตส่วนตัวอยู่ใน `links` (รองรับ `[[ ]]`)
+- ใช้งาน: หน้า “วันนี้” → คำใหม่ประจำวัน · ตั้งค่า → ชุดคำที่เรียน (จำนวนต่อวัน ระดับ หัวข้อ) · วัดระดับที่ `#/placement`
+- **เครดิต/สัญญาอนุญาต:** ไฟล์ใน `/vocab` เผยแพร่ภายใต้ CC BY-SA 4.0 — ดูหน้า `#/credits` ในแอป
+- ผู้ใช้เดิม: ตั้งค่า → “ย้ายบัตรเดิมเข้าคลังกลาง” (สำรอง JSON ก่อน; ย้อนกลับได้)
+
+### หลังอัปเดตเป็น v1.1.0 (ต้องทำเอง)
+1. **วาง `firestore.rules` ใหม่** ใน Firestore → Rules แล้ว Publish (ถอด `lexicon` และเพิ่ม default deny) — ถ้าไม่ Publish ข้อมูลเดิมยังใช้ได้แต่ rules เก่ายังไม่ปิด path อื่น
+2. **Settings → Pages → Source = GitHub Actions** (ครั้งเดียว) ก่อน push ครั้งแรกที่มี workflow
+3. เปิดแอป 2 ครั้งตอนออนไลน์เพื่อให้ service worker ใหม่ (v33) และไฟล์คลัง (~1 MB gzip) ถูก cache

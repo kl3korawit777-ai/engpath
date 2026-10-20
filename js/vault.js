@@ -1,7 +1,7 @@
 // สร้างไฟล์ Markdown สำหรับ Obsidian vault (หนึ่งคำต่อหนึ่งไฟล์) — pure ไม่แตะ DB/DOM/JSZip
 import { wordKey, thDisplay } from "./lexicon.js";
 import { parseLinks } from "./links.js";
-import { cardTags, levelOf, memoryStatus, normalizeTag } from "./library.js";
+import { cardTags, cardLevel, memoryStatus, normalizeTag } from "./library.js";
 import { buildGraph, EDGE_TYPES } from "./graph.js";
 import { dayKey } from "./streak.js";
 
@@ -80,7 +80,7 @@ export function rewriteNoteLinks(text, names) {
 function wordMarkdown({ node, card, state, lex, notes, related, names, tagList, now }) {
   const status = memoryStatus(state);
   const fm = frontmatter({
-    th: card.th, ipa: card.ipa || lex?.ipa || "", pos: card.pos || "", tags: tagList, level: levelOf(card.freq), status,
+    th: card.th, ipa: card.ipa || lex?.ipa || "", pos: card.pos || "", tags: tagList, level: cardLevel(card), vocab_level: card.level ?? lex?.vocabLevel ?? null, cefr: lex?.cefr || "", status,
     interval: state && !state.isNew ? state.interval : null, due: state && !state.isNew ? dayKey(state.due) : null,
     source: card.source || "manual", created: dayKey(card.createdAt || now),
   });

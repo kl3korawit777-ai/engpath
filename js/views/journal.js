@@ -5,7 +5,7 @@ import { describeError } from "../lexicon.js";
 import { lexiconConfig } from "../localsettings.js";
 import { ActivityClock, FLUSH_EVERY_MS, toSession } from "../activity.js";
 import { dayKey } from "../streak.js";
-import { setAddWordPrefill } from "../scope.js";
+import { gotoLibraryWord } from "../wordnav.js";
 import { CATEGORIES } from "../errlog.js";
 import { h } from "../dom.js";
 
@@ -183,9 +183,7 @@ export function render(root, { toast }) {
   }
 
   function makeCard(it) {
-    const sentence = jn.sentenceWith(entry.corrected || "", it.corrected) || jn.sentenceWith(text, it.original) || "";
-    setAddWordPrefill({ word: it.corrected, example: sentence });
-    location.hash = "#/cards";
+    gotoLibraryWord(it.corrected, toast);
   }
 
   function removeItem(i) {

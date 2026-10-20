@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>placement harness</title>
+<script type="importmap">{ "imports": { "/js/db.js": "/tests/mock-db-nw.js", "../db.js": "/tests/mock-db-nw.js" } }</script>
+<link rel="stylesheet" href="/css/tokens.css"><link rel="stylesheet" href="/css/app.css"></head>
+<body><main class="main" id="view"></main><div id="toast" class="toast" hidden></div>
+<script type="module">
+  const m = await import("/js/views/placement.js");
+  m.render(document.getElementById("view"), { toast: (t) => { const el = document.getElementById("toast"); el.textContent = t; el.hidden = false; } });
+  window.__ready = true;
+</script></body></html>

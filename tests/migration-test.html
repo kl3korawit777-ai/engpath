@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>migration harness</title>
+<script type="importmap">{ "imports": { "/js/db.js": "/tests/mock-db-nw.js", "../db.js": "/tests/mock-db-nw.js" } }</script>
+<link rel="stylesheet" href="/css/tokens.css"><link rel="stylesheet" href="/css/app.css"></head>
+<body><main class="main" id="view"></main><div id="toast" class="toast" hidden></div>
+<script type="module">
+  import { vocab } from "/js/vocab.js";
+  import * as db from "/tests/mock-db-nw.js";
+  await vocab.loadAll();
+  const T = Date.UTC(2026, 9, 1);
+  for (const [id, en] of [["u1", "Run"], ["u2", "decide"], ["u3", "look after"], ["u4", "zzzword"]]) db.create("cards", { id, en, th: "x", example: "a b c d", createdAt: T });
+  window.confirm = () => true;
+  const m = await import("/js/views/migration.js");
+  m.mountMigration(document.getElementById("view"), { toast: (t) => { const el = document.getElementById("toast"); el.textContent = t; el.hidden = false; } });
+  window.__ready = true;
+</script></body></html>

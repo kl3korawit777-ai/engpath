@@ -4,7 +4,7 @@ import * as clips from "../clips.js";
 import * as hwCore from "../handwriting-core.js";
 import { createPlayer, fetchYouTubeTitle } from "../player.js";
 import { ActivityClock, FLUSH_EVERY_MS, toSession } from "../activity.js";
-import { setAddWordPrefill } from "../scope.js";
+import { gotoLibraryWord } from "../wordnav.js";
 import { wordKey } from "../lexicon.js";
 import * as recordings from "../recordings.js";
 import { compareWords, pickMimeType, formatBytes, quotaInfo, micErrorMessage, speechErrorMessage } from "../speech.js";
@@ -561,7 +561,7 @@ export function render(root, { toast }) {
       barEl.replaceChildren(
         h("div", {}, "เลือก: ", h("strong", { text: bar.text })),
         h("div", { class: "row" },
-          h("button", { class: "btn", type: "button", text: "สร้างบัตรคำ", onclick: () => { setAddWordPrefill({ word: bar.text, example: bar.sentence }); location.hash = "#/cards"; } }),
+          h("button", { class: "btn", type: "button", text: "ดูในคลังคำ", onclick: () => gotoLibraryWord(bar.text, toast) }),
           h("button", { class: "btn btn--secondary", type: "button", text: "ส่งไปคัดลายมือ", onclick: () => sendToHandwriting(bar.text) }),
           h("button", { class: "btn btn--secondary btn--chip", type: "button", text: "ปิด", onclick: () => { bar = null; drawBar(); } })));
     }

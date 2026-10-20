@@ -4,7 +4,8 @@ import * as lib from "../library.js";
 import * as gr from "../graph.js";
 import * as ui from "../graphui.js";
 import { wordKey } from "../lexicon.js";
-import { setReviewScope, setAddWordPrefill } from "../scope.js";
+import { setReviewScope } from "../scope.js";
+import { vocab } from "../vocab.js";
 import { MEMORY_LABELS } from "../data/lexicon-config.js";
 import { h } from "../dom.js";
 
@@ -18,8 +19,8 @@ export function render(root, { toast }) {
   let ghosts = false;
   let statuses = new Set();
   let tagPath = "";
+  let levelSel = 0;                      // 0 = ทุกระดับ, อื่น ๆ = ระดับของคลังกลาง
   let selectedId = null;
-  let loadingLex = false;
   let rebuildTimer = null;
 
   const info = h("p", { class: "muted mono", role: "status" });
@@ -65,37 +66,32 @@ export function render(root, { toast }) {
     const tagSel = h("select", { class: "input select", "aria-label": "กรองตามแท็ก", onchange: (e) => { tagPath = e.target.value; applyTagFilter(); updateInfo(); } },
       h("option", { value: "", text: "ทุกแท็ก" }), ...tagPaths().map((p) => h("option", { value: p, text: p, selected: p === tagPath })));
 
-    const missing = graph ? graph.nodes.filter((n) => !n.ghost).length - graph.stats.lexiconLoaded : 0;
     controls.replaceChildren(
-      h("div", { class: "row" }, searchBox, dl, tagSel),
+      h("div", { class: "row" }, searchBox, dl, tagSel, levelSelect()),
       h("div", { class: "stack" }, h("strong", { text: "ชนิดเส้น" }), h("div", { class: "row lib-chips" }, ...typeChips)),
       h("div", { class: "row" }, h("strong", { text: "สถานะ" }), ...statusChips,
-        h("label", { class: "row check" }, h("input", { type: "checkbox", checked: ghosts, onchange: (e) => { ghosts = e.target.checked; rebuild(); } }), h("span", { text: "แสดงคำแนะนำ (คำที่ยังไม่มีบัตร)" }))),
+        h("label", { class: "row check" }, h("input", { type: "checkbox", checked: ghosts, onchange: (e) => { ghosts = e.target.checked; rebuild(); } }), h("span", { text: "แสดงคำแนะนำ (คำในคลังที่ยังไม่ได้เรียน)" }))),
       h("div", { class: "row" },
         h("button", { class: "btn btn--secondary", type: "button", text: "จัดวางใหม่", onclick: async () => { await view.relayout(); toast("จัดวางใหม่แล้ว"); } }),
-        h("button", { class: "btn btn--secondary", type: "button", text: "ให้พอดีหน้าจอ", onclick: () => view.fit() }),
-        missing > 0 ? h("button", { class: "btn btn--secondary", type: "button", disabled: loadingLex || !navigator.onLine, text: loadingLex ? "กำลังโหลด…" : `โหลดข้อมูลคำที่ยังไม่มีในเครื่อง (${missing} คำ)`,
-          title: "อ่านจาก Firestore ทีละคำ (นับ read) เพื่อให้เห็นคำพ้อง/คำตรงข้ามครบ — กดเมื่อต้องการเท่านั้น", onclick: loadMissing }) : null));
+        h("button", { class: "btn btn--secondary", type: "button", text: "ให้พอดีหน้าจอ", onclick: () => view.fit() })));
   }
 
+  // ระดับของบัตร: บัตรจากคลังมี level ในตัว บัตรเดิมหาจากคำเดียวกันในคลัง
+  const levelOfCard = (c) => c.level ?? vocab.peek(wordKey(c.en))?.level ?? 0;
+  function levelSelect() {
+    const present = [...new Set(db.list("cards").map(levelOfCard).filter(Boolean))].sort((a, b) => a - b);
+    return h("select", { class: "input select", "aria-label": "กรองตามระดับ", onchange: (e) => { levelSel = Number(e.target.value); applyTagFilter(); updateInfo(); } },
+      h("option", { value: 0, text: "ทุกระดับ" }), ...present.map((n) => h("option", { value: n, text: `ระดับ ${n}`, selected: n === levelSel })));
+  }
   function applyTagFilter() {
-    if (!tagPath) { view.setIdFilter(null); return; }
-    view.setIdFilter(new Set(db.list("cards").filter((c) => lib.tagMatches(c, tagPath)).map((c) => wordKey(c.en))));
+    if (!tagPath && !levelSel) { view.setIdFilter(null); return; }
+    view.setIdFilter(new Set(db.list("cards").filter((c) => (!tagPath || lib.tagMatches(c, tagPath)) && (!levelSel || levelOfCard(c) === levelSel)).map((c) => wordKey(c.en))));
   }
 
   function updateInfo() {
     if (!graph) return;
     const v = view.visibleCount(), real = graph.nodes.filter((n) => !n.ghost).length;
-    info.textContent = `${v.nodes} โหนด · ${v.edges} เส้นที่แสดง · ข้อมูลคำพ้อง/ตรงข้ามจากคลังคำ ${graph.stats.lexiconLoaded}/${real} คำ${graph.stats.skippedSentences ? ` · ข้าม ${graph.stats.skippedSentences} ประโยคที่มีคำในคลังมากเกินไป` : ""}`;
-  }
-
-  async function loadMissing() {
-    loadingLex = true; drawControls();
-    const keys = cardKeys();
-    const r = await ui.fetchMissingLexicon(keys, (d, t) => { info.textContent = `กำลังโหลดข้อมูลคำ ${d}/${t}…`; });
-    loadingLex = false;
-    toast(r.tried ? `โหลดแล้ว ${r.got}/${r.tried} คำ (ที่เหลือยังไม่เคยดึงจาก API)` : "ไม่มีคำที่ต้องโหลด");
-    rebuild();
+    info.textContent = `${v.nodes} โหนด · ${v.edges} เส้นที่แสดง · ข้อมูลคำพ้อง/ตรงข้ามจากคลังกลาง ${graph.stats.lexiconLoaded}/${real} คำ${graph.stats.skippedSentences ? ` · ข้าม ${graph.stats.skippedSentences} ประโยคที่มีคำในคลังมากเกินไป` : ""}`;
   }
 
   // ---------- แผงข้าง ----------
@@ -124,7 +120,7 @@ export function render(root, { toast }) {
       !nb.size ? h("p", { class: "muted", text: "ไม่มีเส้นเชื่อมในชนิดที่เปิดอยู่" }) : null,
       h("div", { class: "row" },
         n.ghost
-          ? h("button", { class: "btn", type: "button", text: "เพิ่มเป็นบัตรคำ", onclick: () => { setAddWordPrefill({ word: n.id }); location.hash = "#/cards"; } })
+          ? h("a", { class: "btn", href: `#/word/${encodeURIComponent(n.id)}`, text: "ดูคำนี้ในคลัง (เริ่มเรียนได้)" })
           : [h("a", { class: "btn", href: `#/word/${encodeURIComponent(n.id)}`, text: "เปิดหน้าคำ" }),
              h("button", { class: "btn btn--secondary", type: "button", disabled: group.length < 1, text: `ทบทวนกลุ่มนี้ (${group.length} คำ)`,
                onclick: () => { setReviewScope({ type: "cards", ids: group.map((g) => g.cardId), label: `กลุ่มจากกราฟ: ${n.label} (${group.length})` }); location.hash = "#/cards"; } })])].filter(Boolean));
@@ -174,7 +170,7 @@ export function render(root, { toast }) {
 
   (async () => {
     if (!db.list("cards").length) {
-      box.replaceChildren(h("p", { class: "muted pad", text: "ยังไม่มีบัตรคำ — เพิ่มคำที่หน้า “บัตรคำ” แล้วกราฟจะปรากฏที่นี่" }));
+      box.replaceChildren(h("p", { class: "muted pad", text: "ยังไม่มีคำที่เรียน — เริ่มเรียนคำใหม่ที่หน้า “วันนี้” แล้วกราฟจะปรากฏที่นี่" }));
       drawSide(); drawFamilies();
       return;
     }
