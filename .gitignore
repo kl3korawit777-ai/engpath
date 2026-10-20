@@ -8,3 +8,6 @@ tools/build-vocab/*.key
 tools/build-vocab/input/*.csv
 tools/build-vocab/input/*.jsonl
 tools/build-vocab/input/*.jsonl.gz
+
+# Project Hub (token ส่วนตัว ห้าม commit)
+.hub.env
